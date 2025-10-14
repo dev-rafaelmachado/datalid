@@ -71,4 +71,14 @@ htmlcov/
 *.bak
 
 # experiments
-data/*
+# Ignora tudo em data exceto as pastas raw e processed e seus .gitkeep
+/data/*
+!/data/raw/
+!/data/processed/
+!/data/raw/.gitkeep
+!/data/processed/.gitkeep
+# Ignora tudo dentro de data/raw e data/processed, exceto o .gitkeep
+/data/raw/*
+!/data/raw/.gitkeep
+/data/processed/*
+!/data/processed/.gitkeep
