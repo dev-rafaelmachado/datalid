@@ -7,6 +7,6 @@
   "total_detections": 1,
   "images_with_detections": 1,
   "avg_detections_per_image": 1.0,
-  "avg_inference_time": 0.8514525890350342,
-  "avg_fps": 1.1744635143259323
+  "avg_inference_time": 0.5495002269744873,
+  "avg_fps": 1.8198354630460032
 }
