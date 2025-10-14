@@ -1,0 +1,78 @@
+# ========================================
+# YOLOv8m-seg Training Configuration - TCC
+# Segmentação de Datas de Validade
+# ========================================
+# Hardware: GTX 1660 Super (6GB VRAM)
+# Dataset: ~1000 imagens
+# Tempo estimado: 10-12 horas
+# ========================================
+# ⚠️ ATENÇÃO: Modelo MUITO pesado para segmentação!
+# Recomendado: Treinar overnight ou GPU mais potente
+# ========================================
+
+# Data configuration
+data: config/yolo/segmentation/data_seg.yaml
+
+# Model configuration
+model: yolov8m-seg.pt  # Medium Segmentation - alto desempenho
+task: segment
+
+# Training hyperparameters
+epochs: 150    # Mais épocas para modelo maior convergir
+imgsz: 640     # Resolução padrão YOLO
+batch: 4       # Batch CRÍTICO - não aumentar!
+device: 0      # GPU 0 (primeira GPU disponível)
+
+# Learning rate schedule
+lr0: 0.01      # Learning rate inicial
+lrf: 0.01      # Learning rate final (fração do inicial)
+momentum: 0.937
+weight_decay: 0.0005
+
+# Optimizer
+optimizer: SGD  # SGD geralmente melhor que Adam para YOLO
+
+# Training settings
+patience: 50        # Early stopping após 50 épocas sem melhoria
+workers: 4          # Reduzido para estabilidade
+cache: false        # CRÍTICO: false para economia de RAM
+save: true          # Salvar checkpoints
+save_period: 10     # Salvar a cada 10 épocas (backup!)
+exist_ok: true      # Sobrescrever experimentos anteriores
+
+# Loss gains (pesos das losses)
+box: 7.5   # Peso da loss de bounding box
+cls: 0.5   # Peso da loss de classificação
+dfl: 1.5   # Peso da loss de distribution focal
+
+# Data augmentation (ATIVADO - essencial para generalização!)
+augmentation: true
+
+# Augmentations geométricas
+hsv_h: 0.015        # Variação de matiz (hue)
+hsv_s: 0.7          # Variação de saturação
+hsv_v: 0.4          # Variação de brilho (value)
+degrees: 10.0       # Rotação (±10 graus)
+translate: 0.1      # Translação (10% da imagem)
+scale: 0.5          # Zoom in/out (50%)
+shear: 0.0          # Cisalhamento (desabilitado)
+perspective: 0.0    # Distorção de perspectiva (desabilitado)
+flipud: 0.0         # Flip vertical (desabilitado - texto invertido)
+fliplr: 0.5         # Flip horizontal (50% de chance)
+
+# Augmentations avançadas
+mosaic: 1.0         # Mosaic augmentation (combina 4 imagens - 100%)
+mixup: 0.1          # MixUp (mistura 2 imagens) - 10% de chance
+copy_paste: 0.0     # Copy-paste augmentation (desabilitado)
+
+# Validation settings
+val: true           # Executar validação durante treinamento
+
+# ========================================
+# ⚠️ AVISOS IMPORTANTES:
+# ========================================
+# • Use apenas se YOLOv8s-seg não atingir precisão desejada
+# • Considere treinar em GPU com mais VRAM se possível
+# • Monitore uso de memória durante treino
+# • Pode ser necessário reduzir imgsz para 512 se der OOM
+# ========================================

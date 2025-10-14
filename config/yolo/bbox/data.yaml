@@ -1,0 +1,20 @@
+# Caminho absoluto ou relativo ao diretório de execução
+path: data/processed/v1_bbox
+
+# Splits (relativos ao 'path')
+train: train/images
+val: valid/images
+test: test/images
+
+# Classes
+nc: 1
+names: 
+  0: exp_date
+
+# Metadata (opcional)
+roboflow:
+  workspace: projetotransformadorii
+  project: tcc_dateset_v2-zkcsu
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/projetotransformadorii/tcc_dateset_v2-zkcsu/dataset/1

@@ -1,0 +1,95 @@
+# ========================================
+# YOLOv8s Training Configuration - TCC
+# Detecção de Datas de Validade
+# ========================================
+# Hardware: GTX 1660 Super (6GB VRAM)
+# Dataset: ~1000 imagens
+# Tempo estimado: 3-4 horas
+# ========================================
+
+# Data configuration
+data: config/yolo/bbox/data.yaml
+
+# Model configuration
+model: yolov8s.pt  # Small - bom equilíbrio entre velocidade e precisão
+task: detect
+
+# Training hyperparameters
+epochs: 120  # Suficiente para dataset pequeno com augmentation
+imgsz: 640   # Resolução padrão YOLO
+batch: 16    # Otimizado para GTX 1660S (6GB)
+device: 0    # GPU 0 (primeira GPU disponível)
+
+# Learning rate schedule
+lr0: 0.01      # Learning rate inicial
+lrf: 0.01      # Learning rate final (fração do inicial)
+momentum: 0.937
+weight_decay: 0.0005
+
+# Optimizer
+optimizer: SGD  # SGD geralmente melhor que Adam para YOLO
+
+# Training settings
+patience: 40        # Early stopping após 40 épocas sem melhoria
+workers: 4          # Número de workers (ajustado para Windows)
+cache: false        # false = menos RAM, true = treinamento mais rápido
+save: true          # Salvar checkpoints
+save_period: 10     # Salvar a cada 10 épocas
+exist_ok: true      # Sobrescrever experimentos anteriores
+
+# Loss gains (pesos das losses)
+box: 7.5   # Peso da loss de bounding box
+cls: 0.5   # Peso da loss de classificação
+dfl: 1.5   # Peso da loss de distribution focal
+
+# Data augmentation (ESSENCIAL para dataset pequeno!)
+augmentation: true
+
+# Augmentations geométricas
+hsv_h: 0.015        # Variação de matiz (hue)
+hsv_s: 0.7          # Variação de saturação
+hsv_v: 0.4          # Variação de brilho (value)
+degrees: 10.0       # Rotação (±10 graus) - útil para produtos em prateleiras
+translate: 0.1      # Translação (10% da imagem)
+scale: 0.5          # Zoom in/out (50%)
+shear: 0.0          # Cisalhamento (0 = desabilitado)
+perspective: 0.0    # Distorção de perspectiva
+flipud: 0.0         # Flip vertical (0 = desabilitado para texto)
+fliplr: 0.5         # Flip horizontal (50% de chance)
+
+# Augmentations avançadas
+mosaic: 1.0         # Mosaic augmentation (combina 4 imagens)
+mixup: 0.1          # MixUp (mistura 2 imagens) - 10% de chance
+copy_paste: 0.0     # Copy-paste augmentation (desabilitado)
+
+# Validation settings
+val: true           # Executar validação durante treinamento
+plots: true         # Gerar plots de métricas
+rect: false         # Rectangular training (false = mais augmentation)
+
+# Project settings
+project: experiments              # Pasta onde salvar resultados
+name: yolov8s_validade_final     # Nome do experimento
+
+# Inference settings (para depois do treino)
+conf: 0.25          # Confidence threshold para predições
+iou: 0.7            # IoU threshold para NMS
+
+# ========================================
+# Notas para o TCC:
+# ========================================
+# 1. Tempo estimado: 3-4 horas
+# 2. Batch 16 é ideal para 1660S
+# 3. Augmentation habilitada (crítico!)
+# 4. Early stopping em 40 épocas
+# 5. Checkpoints salvos a cada 10 épocas
+#
+# Para treinar:
+# yolo train data=data.yaml model=yolov8s.pt cfg=yolov8s_config.yaml
+#
+# Para validar:
+# yolo val data=data.yaml model=experiments/yolov8s_validade_final/weights/best.pt
+#
+# Para inferência:
+# yolo predict model=experiments/yolov8s_validade_final/weights/best.pt source=test_images/
+# ========================================

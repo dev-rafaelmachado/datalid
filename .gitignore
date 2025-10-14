@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pip-cache/
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# PyTorch
+*.pth
+*.pt
+!configs/*.pt
+
+# Experiments (keep structure, ignore large files)
+experiments/*/weights/*.pt
+experiments/*/runs/
+
+# Datasets (raw data from Roboflow)
+datasets/raw/**/*
+!datasets/raw/.gitkeep
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# MLflow / W&B
+mlruns/
+wandb/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Pytest & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+
+# Temporary files
+*.tmp
+*.bak
+
+# experiments
+data/*

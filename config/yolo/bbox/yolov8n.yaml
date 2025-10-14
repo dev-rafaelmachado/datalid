@@ -1,0 +1,105 @@
+# ========================================
+# YOLOv8n Training Configuration - TCC
+# Detecção de Datas de Validade
+# ========================================
+# Hardware: GTX 1660 Super (6GB VRAM)
+# Dataset: ~1000 imagens
+# Tempo estimado: 1.5-2 horas
+# ========================================
+
+# Data configuration
+data: config/yolo/bbox/data.yaml
+
+# Model configuration
+model: yolov8n.pt  # Nano - modelo mais leve e rápido (3.2M parâmetros)
+task: detect
+
+# Training hyperparameters
+epochs: 100    # Épocas suficientes para dataset pequeno
+imgsz: 640     # Resolução padrão YOLO
+batch: 8       # Batch reduzido (mais estável que 32 para dataset pequeno)
+device: 0      # GPU 0 (primeira GPU disponível)
+
+# Learning rate schedule
+lr0: 0.01      # Learning rate inicial
+lrf: 0.01      # Learning rate final (fração do inicial)
+momentum: 0.937
+weight_decay: 0.0005
+
+# Optimizer
+optimizer: SGD  # SGD geralmente melhor que Adam para YOLO
+
+# Training settings
+patience: 50        # Early stopping após 50 épocas sem melhoria
+workers: 4          # Número de workers (ajustado para Windows)
+cache: false        # false = menos RAM, true = treinamento mais rápido
+save: true          # Salvar checkpoints
+save_period: -1     # -1 = salvar apenas o melhor modelo
+exist_ok: true      # Sobrescrever experimentos anteriores
+
+# Loss gains (pesos das losses)
+box: 7.5   # Peso da loss de bounding box (detecção da região)
+cls: 0.5   # Peso da loss de classificação (tipo de objeto)
+dfl: 1.5   # Peso da loss de distribution focal (refinamento)
+
+# Data augmentation (HABILITADO - crítico para dataset pequeno!)
+augmentation: true
+
+# Augmentations geométricas
+hsv_h: 0.015        # Variação de matiz (hue) - pequena variação de cor
+hsv_s: 0.7          # Variação de saturação - diferentes condições de luz
+hsv_v: 0.4          # Variação de brilho (value) - iluminação
+degrees: 10.0       # Rotação (±10 graus) - produtos inclinados
+translate: 0.1      # Translação (10% da imagem) - posição variada
+scale: 0.5          # Zoom in/out (50%) - diferentes distâncias
+shear: 0.0          # Cisalhamento (desabilitado)
+perspective: 0.0    # Distorção de perspectiva (desabilitado)
+flipud: 0.0         # Flip vertical (0 = desabilitado - texto ficaria invertido)
+fliplr: 0.5         # Flip horizontal (50% de chance)
+
+# Augmentations avançadas
+mosaic: 1.0         # Mosaic augmentation (combina 4 imagens)
+mixup: 0.1          # MixUp (mistura 2 imagens) - 10% de chance
+copy_paste: 0.0     # Copy-paste augmentation (desabilitado)
+
+# Validation settings
+val: true           # Executar validação durante treinamento
+plots: true         # Gerar plots de métricas
+rect: false         # Rectangular training (false = mais augmentation)
+
+# Project settings
+project: experiments              # Pasta onde salvar resultados
+name: yolov8n_validade_baseline  # Nome do experimento (baseline)
+
+# Inference settings (para depois do treino)
+conf: 0.25          # Confidence threshold para predições
+iou: 0.7            # IoU threshold para NMS
+
+# ========================================
+# Notas para o TCC:
+# ========================================
+# 1. YOLOv8n = BASELINE (mais rápido)
+# 2. Tempo estimado: 1.5-2 horas
+# 3. Batch 8 (conservador para estabilidade)
+# 4. Augmentation ATIVADA (essencial!)
+# 5. Salva apenas o melhor modelo
+# 6. Use este como experimento inicial
+#
+# Vantagens:
+# ✓ Treinamento rápido para iterações
+# ✓ Bom para testar pipeline completo
+# ✓ Menor chance de overfitting
+# ✓ Inferência mais rápida
+#
+# Desvantagens:
+# ✗ Menor precisão que modelos maiores
+# ✗ Pode perder detecções difíceis
+#
+# Para treinar:
+# yolo train data=data.yaml model=yolov8n.pt cfg=yolov8n_config.yaml
+#
+# Para validar:
+# yolo val data=data.yaml model=experiments/yolov8n_validade_baseline/weights/best.pt
+#
+# Para comparar com yolov8s e yolov8m depois!
+# ========================================
