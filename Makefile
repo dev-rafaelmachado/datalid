@@ -923,3 +923,11 @@ example-predict:
 	echo "$(CYAN)ou use o atalho:$(RESET)"; \
 	echo ""; \
 	echo "   make predict-latest IMAGE=SUA_IMAGEM.jpg";
+
+
+# Download dataset (download_roboflow.py)
+.PHONY: download-dataset
+download-dataset:
+	@echo "$(CYAN)📥 Baixando dataset...$(RESET)"
+	python scripts/download_roboflow.py
+	

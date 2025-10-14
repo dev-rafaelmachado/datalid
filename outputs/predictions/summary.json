@@ -1,12 +1,12 @@
 {
-  "model": "C:\\Users\\rafael\\Documents\\Arquivos\\code\\tcc\\datalid3.0\\experiments\\yolov8m_seg_best\\weights\\best.pt",
+  "model": "C:\\Users\\rafae\\Documents\\Arquivos\\code\\tcc\\datalid\\experiments\\yolov8m_seg_best\\weights\\best.pt",
   "task": "segment",
   "conf_threshold": 0.25,
   "iou_threshold": 0.7,
   "total_images": 1,
-  "total_detections": 1,
+  "total_detections": 2,
   "images_with_detections": 1,
-  "avg_detections_per_image": 1.0,
-  "avg_inference_time": 0.5495002269744873,
-  "avg_fps": 1.8198354630460032
+  "avg_detections_per_image": 2.0,
+  "avg_inference_time": 0.7400717735290527,
+  "avg_fps": 1.3512202947985332
 }
