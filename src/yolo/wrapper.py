@@ -66,7 +66,10 @@ class YOLOWrapper:
             
             if device_id >= gpu_count:
                 logger.warning(f"GPU {device_id} não encontrada, usando GPU 0")
-                self.device = '0'
+                device_id = 0
+            
+            # Converter para formato correto (cuda:0 ou apenas 0 para YOLO)
+            self.device = device_id
     
     def load_model(self, model_path: str) -> None:
         """Carrega modelo YOLO."""
@@ -85,10 +88,13 @@ class YOLOWrapper:
             self.is_loaded = True
             
             # Configurar dispositivo
+            # YOLO aceita: inteiro (0, 1, etc), 'cpu', ou 'cuda'
+            device_arg = self.device if isinstance(self.device, int) or self.device == 'cpu' else int(self.device)
             if hasattr(self.model, 'to'):
-                self.model.to(self.device)
+                self.model.to(device_arg)
             
             logger.success(f"✅ Modelo carregado: {model_path}")
+            logger.info(f"📍 Dispositivo: {device_arg}")
             self._log_model_info()
             
         except Exception as e:

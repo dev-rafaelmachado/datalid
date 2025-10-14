@@ -59,6 +59,7 @@ help:
 	@echo ""
 	@echo "$(GREEN)🔍 VALIDAÇÃO E TESTE:$(RESET)"
 	@echo "  test-cuda            Testa disponibilidade CUDA/GPU"
+	@echo "  test-tensorboard     Testa TensorBoard em tempo real ⭐"
 	@echo "  validate-env         Valida ambiente Python"
 	@echo "  validate-segment     Valida dataset de SEGMENTAÇÃO ⭐"
 	@echo "  validate-detect      Valida dataset de DETECÇÃO"
@@ -111,7 +112,14 @@ help:
 	@echo "  analyze-best-model   Análise automática do último modelo ⭐"
 	@echo "  help-analysis        Ajuda sobre análise e comparação"
 	@echo ""
-	@echo "$(GREEN)🚀 API E DEPLOY:$(RESET)"
+	@echo "$(GREEN)� PREDIÇÃO/INFERÊNCIA:$(RESET)"
+	@echo "  predict-latest       Predição com último modelo (IMAGE=) ⭐"
+	@echo "  test-inference       Teste rápido (MODEL= IMAGE=) ⭐"
+	@echo "  predict-image        Predição em uma imagem (MODEL= IMAGE=)"
+	@echo "  predict-dir          Predição em diretório (MODEL= DIR=)"
+	@echo "  predict-batch        Predição em lote (MODEL= IMAGES='...')"
+	@echo ""
+	@echo "$(GREEN)�🚀 API E DEPLOY:$(RESET)"
 	@echo "  run-api              Inicia API de desenvolvimento"
 	@echo "  build-docker         Constrói imagem Docker"
 	@echo "  run-docker           Executa container Docker"
@@ -142,10 +150,17 @@ install-all: install install-dev
 # 🔍 VALIDAÇÃO E TESTE
 # ========================================
 
-.PHONY: test-cuda validate-env test test-cov
+.PHONY: test-cuda validate-env test test-cov test-tensorboard
 test-cuda:
 	@echo "$(YELLOW)🧪 Testando CUDA/GPU...$(RESET)"
 	$(PYTHON) $(SCRIPTS_DIR)/test_cuda.py
+
+test-tensorboard:
+	@echo "$(YELLOW)🧪 Testando TensorBoard em Tempo Real com treinamento REAL...$(RESET)"
+	@echo "$(CYAN)📊 Este teste irá treinar um modelo por 5 épocas$(RESET)"
+	@echo "$(CYAN)🔍 Abra outro terminal e execute: tensorboard --logdir=experiments$(RESET)"
+	@echo ""
+	$(PYTHON) $(SCRIPTS_DIR)/test_tensorboard_realtime.py
 
 validate-env:
 	@echo "$(YELLOW)🔍 Validando ambiente...$(RESET)"
@@ -533,7 +548,136 @@ compare-detects:
 	$(PYTHON) $(SCRIPTS_DIR)/compare_models.py --experiments-dir $(EXPERIMENTS_DIR) --pattern "*-detect-*"
 
 # ========================================
-# 🚀 API E DEPLOY
+# � PREDIÇÃO/INFERÊNCIA
+# ========================================
+
+.PHONY: predict predict-image predict-dir predict-batch predict-latest
+predict:
+	@echo "$(MAGENTA)🔮 Predição com modelo YOLO$(RESET)"
+	@echo "$(CYAN)Use os comandos específicos abaixo:$(RESET)"
+	@echo "  predict-image       Predição em uma imagem"
+	@echo "  predict-dir         Predição em diretório"
+	@echo "  predict-batch       Predição em lote"
+	@echo "  predict-latest      Predição com último modelo treinado"
+
+# Predição em uma única imagem
+predict-image:
+	@echo "$(GREEN)🔮 Executando predição em imagem...$(RESET)"
+ifndef MODEL
+	@echo "$(RED)❌ Erro: Especifique MODEL=caminho/para/weights.pt$(RESET)"
+	@echo "$(YELLOW)Exemplo: make predict-image MODEL=experiments/yolov8s-seg_final/weights/best.pt IMAGE=test.jpg$(RESET)"
+	@exit 1
+endif
+ifndef IMAGE
+	@echo "$(RED)❌ Erro: Especifique IMAGE=caminho/para/imagem.jpg$(RESET)"
+	@echo "$(YELLOW)Exemplo: make predict-image MODEL=experiments/yolov8s-seg_final/weights/best.pt IMAGE=test.jpg$(RESET)"
+	@exit 1
+endif
+	@echo "$(CYAN)📸 Modelo: $(MODEL)$(RESET)"
+	@echo "$(CYAN)🖼️ Imagem: $(IMAGE)$(RESET)"
+	@echo "$(CYAN)💾 Salvando em: outputs/predictions/$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/predict_yolo.py \
+		--model $(MODEL) \
+		--image $(IMAGE) \
+		--output-dir outputs/predictions \
+		--save-images \
+		--save-json \
+		--conf $${CONF:-0.25} \
+		--iou $${IOU:-0.7}
+	@echo "$(GREEN)✅ Predição concluída!$(RESET)"
+	@echo "$(YELLOW)📁 Resultados salvos em: outputs/predictions/"
+
+# Predição em diretório
+predict-dir:
+	@echo "$(GREEN)🔮 Executando predição em diretório...$(RESET)"
+ifndef MODEL
+	@echo "$(RED)❌ Erro: Especifique MODEL=caminho/para/weights.pt$(RESET)"
+	@echo "$(YELLOW)Exemplo: make predict-dir MODEL=best.pt DIR=data/test/$(RESET)"
+	@exit 1
+endif
+ifndef DIR
+	@echo "$(RED)❌ Erro: Especifique DIR=caminho/para/diretorio$(RESET)"
+	@echo "$(YELLOW)Exemplo: make predict-dir MODEL=best.pt DIR=data/test/$(RESET)"
+	@exit 1
+endif
+	@echo "$(CYAN)📸 Modelo: $(MODEL)$(RESET)"
+	@echo "$(CYAN)📁 Diretório: $(DIR)$(RESET)"
+	@echo "$(CYAN)💾 Salvando em: outputs/predictions/$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/predict_yolo.py \
+		--model $(MODEL) \
+		--directory $(DIR) \
+		--output-dir outputs/predictions \
+		--save-images \
+		--save-json \
+		--conf $${CONF:-0.25} \
+		--iou $${IOU:-0.7}
+	@echo "$(GREEN)✅ Predição concluída!$(RESET)"
+	@echo "$(YELLOW)📁 Resultados salvos em: outputs/predictions/"
+
+# Predição em lote (lista de imagens)
+predict-batch:
+	@echo "$(GREEN)🔮 Executando predição em lote...$(RESET)"
+ifndef MODEL
+	@echo "$(RED)❌ Erro: Especifique MODEL=caminho/para/weights.pt$(RESET)"
+	@echo "$(YELLOW)Exemplo: make predict-batch MODEL=best.pt IMAGES='img1.jpg img2.jpg img3.jpg'$(RESET)"
+	@exit 1
+endif
+ifndef IMAGES
+	@echo "$(RED)❌ Erro: Especifique IMAGES='img1.jpg img2.jpg ...'$(RESET)"
+	@echo "$(YELLOW)Exemplo: make predict-batch MODEL=best.pt IMAGES='img1.jpg img2.jpg img3.jpg'$(RESET)"
+	@exit 1
+endif
+	@echo "$(CYAN)📸 Modelo: $(MODEL)$(RESET)"
+	@echo "$(CYAN)🖼️ Imagens: $(IMAGES)$(RESET)"
+	@echo "$(CYAN)💾 Salvando em: outputs/predictions/$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/predict_yolo.py \
+		--model $(MODEL) \
+		--batch $(IMAGES) \
+		--output-dir outputs/predictions \
+		--save-images \
+		--save-json \
+		--conf $${CONF:-0.25} \
+		--iou $${IOU:-0.7}
+	@echo "$(GREEN)✅ Predição concluída!$(RESET)"
+	@echo "$(YELLOW)📁 Resultados salvos em: outputs/predictions/"
+
+# Predição com último modelo treinado (automático)
+predict-latest:
+	@echo "$(GREEN)🔮 Executando predição com último modelo treinado...$(RESET)"
+ifndef IMAGE
+	@echo "$(RED)❌ Erro: Especifique IMAGE=caminho/para/imagem.jpg$(RESET)"
+	@echo "$(YELLOW)Exemplo: make predict-latest IMAGE=test.jpg$(RESET)"
+	@exit 1
+endif
+	$(PYTHON) $(SCRIPTS_DIR)/predict_latest.py \
+		--image "$(IMAGE)" \
+		--conf $(if $(CONF),$(CONF),0.25) \
+		--iou $(if $(IOU),$(IOU),0.7) \
+		--save-images \
+		--save-json
+
+# Teste rápido de inferência (modelo + imagem customizáveis)
+test-inference:
+	@echo "$(GREEN)🧪 Teste de inferência...$(RESET)"
+ifndef MODEL
+	@echo "$(RED)❌ Erro: Especifique MODEL=caminho/para/weights.pt$(RESET)"
+	@echo "$(YELLOW)Exemplo: make test-inference MODEL=experiments/yolov8s-seg_final/weights/best.pt IMAGE=test.jpg$(RESET)"
+	@exit 1
+endif
+ifndef IMAGE
+	@echo "$(RED)❌ Erro: Especifique IMAGE=caminho/para/imagem.jpg$(RESET)"
+	@echo "$(YELLOW)Exemplo: make test-inference MODEL=experiments/yolov8s-seg_final/weights/best.pt IMAGE=test.jpg$(RESET)"
+	@exit 1
+endif
+	$(PYTHON) $(SCRIPTS_DIR)/test_inference.py \
+		--model "$(MODEL)" \
+		--image "$(IMAGE)" \
+		--conf $(if $(CONF),$(CONF),0.25) \
+		--iou $(if $(IOU),$(IOU),0.7) \
+		$(if $(CROPS),--save-crops,)
+
+# ========================================
+# �🚀 API E DEPLOY
 # ========================================
 
 .PHONY: run-api build-docker run-docker
@@ -702,7 +846,6 @@ endif
 	@echo "$(GREEN)🎉 WORKFLOW TCC CONCLUÍDO!$(RESET)"
 	@echo "$(YELLOW)📊 Resultados em: experiments/$(RESET)"
 	@echo "$(YELLOW)📈 Comparação: experiments/final_comparison.png$(RESET)"
-	@echo "$(YELLOW)📝 Relatório: experiments/relatorio_completo.md$(RESET)"
 
 # Workflow alternativo - DETECÇÃO
 workflow-tcc-detect:
@@ -727,169 +870,56 @@ endif
 	@echo "$(GREEN)🎉 WORKFLOW TCC DETECÇÃO CONCLUÍDO!$(RESET)"
 
 # ========================================
-# 📥 DOWNLOAD DE DADOS DO ROBOFLOW
+# 📝 EXEMPLOS DE USO - PREDIÇÃO
 # ========================================
 
-# Download básico com configurações padrão
-.PHONY: download-dataset
-download-dataset:
-	@echo "$(CYAN)📥 Baixando dataset do Roboflow...$(RESET)"
-	python scripts/download_roboflow.py --output $(DATA_DIR)/raw
+.PHONY: help-predict example-predict
+help-predict:
+	@echo "$(CYAN)🔮 EXEMPLOS DE USO - PREDIÇÃO$(RESET)"
+	@echo "$(CYAN)======================================$(RESET)"
+	@echo ""
+	@echo "$(GREEN)1. Predição em uma imagem:$(RESET)"
+	@echo "   make predict-image MODEL=experiments/yolov8s-seg_final/weights/best.pt IMAGE=test.jpg"
+	@echo ""
+	@echo "$(GREEN)2. Com threshold customizado:$(RESET)"
+	@echo "   make predict-image MODEL=best.pt IMAGE=test.jpg CONF=0.5 IOU=0.8"
+	@echo ""
+	@echo "$(GREEN)3. Predição em diretório:$(RESET)"
+	@echo "   make predict-dir MODEL=best.pt DIR=data/test/"
+	@echo ""
+	@echo "$(GREEN)4. Predição em lote:$(RESET)"
+	@echo "   make predict-batch MODEL=best.pt IMAGES='img1.jpg img2.jpg img3.jpg'"
+	@echo ""
+	@echo "$(GREEN)5. Predição com último modelo treinado (automático):$(RESET)"
+	@echo "   make predict-latest IMAGE=test.jpg"
+	@echo ""
+	@echo "$(YELLOW)💡 OPÇÕES ADICIONAIS:$(RESET)"
+	@echo "   CONF=0.5        # Threshold de confidence (padrão: 0.25)"
+	@echo "   IOU=0.8         # Threshold de IoU NMS (padrão: 0.7)"
+	@echo ""
+	@echo "$(YELLOW)📁 RESULTADOS SALVOS EM:$(RESET)"
+	@echo "   outputs/predictions/images/     # Imagens com predições"
+	@echo "   outputs/predictions/json/       # Resultados em JSON"
+	@echo "   outputs/predictions/crops/      # Crops das detecções"
+	@echo "   outputs/predictions/summary.json # Resumo geral"
 
-# Download com processamento automático
-.PHONY: download-and-process
-download-and-process:
-	@echo "$(CYAN)📥 Baixando e processando dataset...$(RESET)"
-	python scripts/download_roboflow.py \
-		--output $(DATA_DIR)/raw \
-		--process-after
-
-# Download de versão específica
-.PHONY: download-version
-download-version:
-	@echo "$(CYAN)📥 Baixando versão específica...$(RESET)"
-ifndef VERSION
-	@echo "$(RED)❌ Erro: Especifique VERSION=numero_da_versao$(RESET)"
-	@exit 1
-endif
-	python scripts/download_roboflow.py \
-		--version $(VERSION) \
-		--output $(DATA_DIR)/raw
-
-# Download em formato específico
-.PHONY: download-format
-download-format:
-	@echo "$(CYAN)📥 Baixando em formato específico...$(RESET)"
-ifndef FORMAT
-	@echo "$(RED)❌ Erro: Especifique FORMAT=yolov8|coco|pascal-voc$(RESET)"
-	@exit 1
-endif
-	python scripts/download_roboflow.py \
-		--format $(FORMAT) \
-		--output $(DATA_DIR)/raw
-
-# Download com configurações customizadas
-.PHONY: download-custom
-download-custom:
-	@echo "$(CYAN)📥 Download customizado...$(RESET)"
-	python scripts/download_roboflow.py \
-		--workspace $(WORKSPACE) \
-		--project $(PROJECT) \
-		--version $(VERSION) \
-		--format $(FORMAT) \
-		--api-key $(API_KEY) \
-		--output $(DATA_DIR)/raw
-
-# Workflow completo: download + processamento + treinamento rápido
-.PHONY: workflow-complete
-workflow-complete:
-	@echo "$(MAGENTA)🔄 WORKFLOW COMPLETO: Download + Processamento + Teste$(RESET)"
-	make download-and-process
-	make train-quick
-	@echo "$(GREEN)✅ Workflow completo finalizado!$(RESET)"
-
-# Workflow completo para TCC: download + processamento + treinamentos finais - SEGMENTAÇÃO ⭐
-.PHONY: workflow-tcc-complete workflow-tcc-complete-detect
-
-workflow-tcc-complete:
-	@echo "$(MAGENTA)🎓 WORKFLOW TCC COMPLETO - SEGMENTAÇÃO POLIGONAL$(RESET)"
-	@echo "$(CYAN)1/7 📥 Baixando dataset...$(RESET)"
-	make download-dataset
-	@echo "$(CYAN)2/7 📊 Processando dados SEGMENTAÇÃO...$(RESET)"
-	make process-auto INPUT=$(DATA_DIR)/raw/*
-	@echo "$(CYAN)3/7 🧪 Teste rápido SEGMENTAÇÃO...$(RESET)"
-	make train-quick
-	@echo "$(CYAN)4/7 🚀 Treinando modelos SEGMENTAÇÃO finais...$(RESET)"
-	make train-final-nano
-	make train-final-small
-	make train-final-medium
-	@echo "$(CYAN)5/7 📦 Treinando DETECÇÃO (comparação)...$(RESET)"
-	make train-final-detect-small
-	@echo "$(CYAN)6/7 📈 Gerando comparação...$(RESET)"
-	make compare-final
-	@echo "$(CYAN)7/7 📝 Gerando relatório...$(RESET)"
-	make generate-report
-	@echo "$(GREEN)🎉 WORKFLOW TCC COMPLETO FINALIZADO!$(RESET)"
-	@echo "$(YELLOW)📊 Todos os resultados estão em: experiments/$(RESET)"
-
-workflow-tcc-complete-detect:
-	@echo "$(MAGENTA)🎓 WORKFLOW TCC COMPLETO - DETECÇÃO$(RESET)"
-	@echo "$(CYAN)1/6 📥 Baixando dataset...$(RESET)"
-	make download-dataset
-	@echo "$(CYAN)2/6 📊 Processando dados DETECÇÃO...$(RESET)"
-	make process-detect INPUT=$(DATA_DIR)/raw/*
-	@echo "$(CYAN)3/6 🧪 Teste rápido DETECÇÃO...$(RESET)"
-	make train-quick-detect
-	@echo "$(CYAN)4/6 🚀 Treinando modelos DETECÇÃO finais...$(RESET)"
-	make train-final-detect-nano
-	make train-final-detect-small
-	make train-final-detect-medium
-	@echo "$(CYAN)5/6 📈 Gerando comparação...$(RESET)"
-	make compare-final
-	@echo "$(CYAN)6/6 📝 Gerando relatório...$(RESET)"
-	make generate-report
-	@echo "$(GREEN)🎉 WORKFLOW TCC DETECÇÃO COMPLETO FINALIZADO!$(RESET)"
-
-# ========================================
-# 📥 DOWNLOAD DE DADOS DO ROBOFLOW
-# ========================================
-
-# Download básico com configurações padrão
-.PHONY: download-dataset
-download-dataset:
-	@echo "$(CYAN)📥 Baixando dataset do Roboflow...$(RESET)"
-	python scripts/download_roboflow.py --output $(DATA_DIR)/raw
-
-# Download com processamento automático
-.PHONY: download-and-process
-download-and-process:
-	@echo "$(CYAN)📥 Baixando e processando dataset...$(RESET)"
-	python scripts/download_roboflow.py \
-		--output $(DATA_DIR)/raw \
-		--process-after
-
-# Download de versão específica
-.PHONY: download-version
-download-version:
-	@echo "$(CYAN)📥 Baixando versão específica...$(RESET)"
-ifndef VERSION
-	@echo "$(RED)❌ Erro: Especifique VERSION=numero_da_versao$(RESET)"
-	@exit 1
-endif
-	python scripts/download_roboflow.py \
-		--version $(VERSION) \
-		--output $(DATA_DIR)/raw
-
-# Download em formato específico
-.PHONY: download-format
-download-format:
-	@echo "$(CYAN)📥 Baixando em formato específico...$(RESET)"
-ifndef FORMAT
-	@echo "$(RED)❌ Erro: Especifique FORMAT=yolov8|coco|pascal-voc$(RESET)"
-	@exit 1
-endif
-	python scripts/download_roboflow.py \
-		--format $(FORMAT) \
-		--output $(DATA_DIR)/raw
-
-# Download com configurações customizadas
-.PHONY: download-custom
-download-custom:
-	@echo "$(CYAN)📥 Download customizado...$(RESET)"
-	python scripts/download_roboflow.py \
-		--workspace $(WORKSPACE) \
-		--project $(PROJECT) \
-		--version $(VERSION) \
-		--format $(FORMAT) \
-		--api-key $(API_KEY) \
-		--output $(DATA_DIR)/raw
-
-# Workflow completo: download + processamento + treinamento rápido
-.PHONY: workflow-complete
-workflow-complete:
-	@echo "$(MAGENTA)🔄 WORKFLOW COMPLETO: Download + Processamento + Teste$(RESET)"
-	make download-and-process
-	make train-quick
-	@echo "$(GREEN)✅ Workflow completo finalizado!$(RESET)"
-
-# Workflow completo para TCC: download + processamento + treinamentos finais
+# Exemplo prático de predição (para testes rápidos)
+example-predict:
+	@echo "$(MAGENTA)🔮 EXEMPLO: Testando predição...$(RESET)"
+	@echo "$(CYAN)Este exemplo usa o último modelo treinado$(RESET)"
+	@echo ""
+	@latest_model=$$(ls -t $(EXPERIMENTS_DIR)/*/weights/best.pt 2>/dev/null | head -1); \
+	if [ -z "$$latest_model" ]; then \
+		echo "$(RED)❌ Nenhum modelo encontrado!$(RESET)"; \
+		echo "$(YELLOW)💡 Primeiro treine um modelo com: make train-quick$(RESET)"; \
+		exit 1; \
+	fi; \
+	echo "$(GREEN)✓ Modelo encontrado: $$latest_model$(RESET)"; \
+	echo ""; \
+	echo "$(YELLOW)💡 Para testar, execute:$(RESET)"; \
+	echo ""; \
+	echo "   make predict-image MODEL=\"$$latest_model\" IMAGE=SUA_IMAGEM.jpg"; \
+	echo ""; \
+	echo "$(CYAN)ou use o atalho:$(RESET)"; \
+	echo ""; \
+	echo "   make predict-latest IMAGE=SUA_IMAGEM.jpg";

@@ -58,33 +58,34 @@ def convert_yolo_results_to_tensorboard(experiment_dir: Path, force: bool = Fals
         logger.info(
             f"📊 Convertendo resultados para TensorBoard: {experiment_dir.name}")
 
-        # Mapear colunas do YOLO para métricas do TensorBoard
+        # Mapear todas as colunas para TensorBoard
         metrics_map = {
             'train/box_loss': 'Loss/train_box',
+            'train/seg_loss': 'Loss/train_seg',
             'train/cls_loss': 'Loss/train_cls',
             'train/dfl_loss': 'Loss/train_dfl',
+            'metrics/precision(B)': 'Metrics/precision_B',
+            'metrics/recall(B)': 'Metrics/recall_B',
+            'metrics/mAP50(B)': 'Metrics/mAP50_B',
+            'metrics/mAP50-95(B)': 'Metrics/mAP50-95_B',
+            'metrics/precision(M)': 'Metrics/precision_M',
+            'metrics/recall(M)': 'Metrics/recall_M',
+            'metrics/mAP50(M)': 'Metrics/mAP50_M',
+            'metrics/mAP50-95(M)': 'Metrics/mAP50-95_M',
             'val/box_loss': 'Loss/val_box',
+            'val/seg_loss': 'Loss/val_seg',
             'val/cls_loss': 'Loss/val_cls',
             'val/dfl_loss': 'Loss/val_dfl',
-            'metrics/precision(B)': 'Metrics/precision',
-            'metrics/recall(B)': 'Metrics/recall',
-            'metrics/mAP50(B)': 'Metrics/mAP50',
-            'metrics/mAP50-95(B)': 'Metrics/mAP50-95',
+            'lr/pg0': 'LR/pg0',
+            'lr/pg1': 'LR/pg1',
+            'lr/pg2': 'LR/pg2',
+            'epoch': 'Meta/epoch',
+            'time': 'Meta/time',
         }
-
-        # Para segmentação, adicionar métricas de máscara
-        if 'metrics/mAP50(M)' in df.columns:
-            metrics_map.update({
-                'metrics/precision(M)': 'Metrics/mask_precision',
-                'metrics/recall(M)': 'Metrics/mask_recall',
-                'metrics/mAP50(M)': 'Metrics/mask_mAP50',
-                'metrics/mAP50-95(M)': 'Metrics/mask_mAP50-95',
-            })
 
         # Converter cada época
         for idx, row in df.iterrows():
             epoch = int(row['epoch']) if 'epoch' in df.columns else idx
-
             for yolo_col, tb_name in metrics_map.items():
                 if yolo_col in df.columns:
                     value = row[yolo_col]

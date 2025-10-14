@@ -278,56 +278,95 @@ class YOLOTrainer:
 
             logger.info("🏋️ Iniciando treinamento...")
             self.is_training = True
+
             # --- INÍCIO INTEGRAÇÃO TENSORBOARD ---
             log_dir = Path(train_args['project']) / \
                 train_args.get('name', 'exp') / 'tensorboard_logs'
             log_dir.mkdir(parents=True, exist_ok=True)
             tb_writer = SummaryWriter(log_dir=str(log_dir))
+            logger.success(f"📊 TensorBoard logs serão salvos em: {log_dir}")
+            logger.info(
+                f"🔍 Para visualizar em tempo real: tensorboard --logdir=experiments")
             # --- FIM INÍCIO INTEGRAÇÃO TENSORBOARD ---
-            # Treinar modelo
 
+            # Treinar modelo
             def on_train_epoch_end_tensorboard(trainer):
-                if self.metrics:
+                """Callback para logar métricas no TensorBoard em tempo real."""
+                try:
+                    epoch = trainer.epoch
+                    logger.info(
+                        f"📊 Callback TensorBoard chamado para época {epoch}")
+
+                    # Capturar métricas do trainer
                     metrics_dict = {}
                     if hasattr(trainer, 'metrics') and trainer.metrics:
-                        metrics_dict = trainer.metrics
+                        metrics_dict = dict(trainer.metrics)
                     elif hasattr(trainer, 'validator') and trainer.validator:
                         if hasattr(trainer.validator, 'metrics'):
-                            metrics_dict = trainer.validator.metrics
-                    self.metrics.update_epoch(trainer.epoch, metrics_dict)
-                    epoch = trainer.epoch
+                            metrics_dict = dict(trainer.validator.metrics)
+
+                    # Também tentar pegar do CSV do trainer
+                    if hasattr(trainer, 'csv') and trainer.csv:
+                        csv_data = trainer.csv
+                        if isinstance(csv_data, dict):
+                            metrics_dict.update(csv_data)
+
+                    logger.info(
+                        f"📊 Métricas disponíveis: {list(metrics_dict.keys())}")
+
+                    # Atualizar métricas internas
+                    if self.metrics:
+                        self.metrics.update_epoch(epoch, metrics_dict)
+
                     # --- LOG TENSORBOARD ---
-                    tb_map = {
-                        'train/loss': 'Loss/train_total',
-                        'val/loss': 'Loss/val_total',
-                        'metrics/mAP50(B)': 'Metrics/mAP50',
-                        'metrics/mAP50-95(B)': 'Metrics/mAP50-95',
-                        'metrics/precision(B)': 'Metrics/precision',
-                        'metrics/recall(B)': 'Metrics/recall',
-                    }
-                    for yolo_col, tb_name in tb_map.items():
-                        if yolo_col in metrics_dict and metrics_dict[yolo_col] is not None:
-                            tb_writer.add_scalar(tb_name, float(
-                                metrics_dict[yolo_col]), epoch)
-                    # Para segmentação
-                    seg_map = {
-                        'metrics/mAP50(M)': 'Metrics/mask_mAP50',
-                        'metrics/mAP50-95(M)': 'Metrics/mask_mAP50-95',
-                        'metrics/precision(M)': 'Metrics/mask_precision',
-                        'metrics/recall(M)': 'Metrics/mask_recall',
-                    }
-                    for yolo_col, tb_name in seg_map.items():
-                        if yolo_col in metrics_dict and metrics_dict[yolo_col] is not None:
-                            tb_writer.add_scalar(tb_name, float(
-                                metrics_dict[yolo_col]), epoch)
+                    # Todas as métricas do CSV
+                    metric_names = [
+                        'train/box_loss', 'train/seg_loss', 'train/cls_loss', 'train/dfl_loss',
+                        'metrics/precision(B)', 'metrics/recall(B)', 'metrics/mAP50(B)', 'metrics/mAP50-95(B)',
+                        'metrics/precision(M)', 'metrics/recall(M)', 'metrics/mAP50(M)', 'metrics/mAP50-95(M)',
+                        'val/box_loss', 'val/seg_loss', 'val/cls_loss', 'val/dfl_loss',
+                        'lr/pg0', 'lr/pg1', 'lr/pg2', 'epoch', 'time'
+                    ]
+
+                    logged_count = 0
+                    for name in metric_names:
+                        if name in metrics_dict and metrics_dict[name] is not None:
+                            try:
+                                value = float(metrics_dict[name])
+                                tb_writer.add_scalar(name, value, epoch)
+                                logged_count += 1
+                                logger.debug(f"  ✓ {name}: {value}")
+                            except (ValueError, TypeError) as e:
+                                logger.warning(
+                                    f"⚠️ Erro ao logar métrica {name}: {e}")
+
                     # Nome do experimento
-                    tb_writer.add_text(
-                        'Config/experiment_name', train_args.get('name', 'exp'), epoch)
-            # Adicionar callback para TensorBoard
+                    if epoch == 0:
+                        tb_writer.add_text(
+                            'Config/experiment_name', train_args.get('name', 'exp'), epoch)
+
+                    # IMPORTANTE: Fazer flush para atualização em tempo real
+                    tb_writer.flush()
+
+                    logger.success(
+                        f"✅ Época {epoch}: {logged_count} métricas logadas no TensorBoard")
+
+                except Exception as e:
+                    logger.error(f"❌ Erro no callback do TensorBoard: {e}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+
+            # Adicionar callback para TensorBoard ANTES de treinar
             if hasattr(self.model, 'add_callback'):
                 self.model.add_callback(
                     'on_train_epoch_end', on_train_epoch_end_tensorboard)
+                logger.success(
+                    "✅ Callback do TensorBoard registrado com sucesso!")
+            else:
+                logger.warning(
+                    "⚠️ Modelo não suporta callbacks - TensorBoard não será atualizado em tempo real")
             # --- FIM INTEGRAÇÃO TENSORBOARD ---
+
             results = self.model.train(**train_args)
 
             # Finalizar métricas
