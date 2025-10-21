@@ -77,6 +77,8 @@ htmlcov/
 !/data/processed/
 !/data/raw/.gitkeep
 !/data/processed/.gitkeep
+/data/ocr_test/*
+!/data/ocr_test/.gitkeep
 # Ignora tudo dentro de data/raw e data/processed, exceto o .gitkeep
 /data/raw/*
 !/data/raw/.gitkeep
