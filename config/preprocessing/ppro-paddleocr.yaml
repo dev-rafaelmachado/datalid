@@ -1,0 +1,43 @@
+# ⚙️ Pré-processamento otimizado para PaddleOCR
+name: ppro-paddleocr
+
+steps:
+  normalize_colors:
+    enabled: true
+    method: gray_world  # Balanceia tons sem distorcer contraste
+
+  resize:
+    enabled: true
+    min_height: 48
+    min_width: 200
+    maintain_aspect: true
+    interpolation: cubic
+
+  grayscale:
+    enabled: false
+
+  deskew:
+    enabled: true
+    method: contours
+    max_angle: 25
+
+  clahe:
+    enabled: false  # Paddle já normaliza internamente o contraste
+
+  sharpen:
+    enabled: true
+    method: unsharp_mask
+    strength: 0.8
+
+  threshold:
+    enabled: false
+
+  denoise:
+    enabled: true
+    method: gaussian
+    kernel_size: [3, 3]  # Suavização leve sem borrar bordas
+
+  padding:
+    enabled: true
+    size: 12
+    color: [255, 255, 255]

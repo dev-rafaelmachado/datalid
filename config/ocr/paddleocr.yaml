@@ -1,0 +1,16 @@
+# PaddleOCR específico
+engine: paddleocr
+model_version: 'v4'
+det_model: 'ch_PP-OCRv4_det'
+rec_model: 'ch_PP-OCRv4_rec'
+
+use_angle_cls: true
+use_gpu: true
+show_log: false
+
+# Thresholds
+det_db_thresh: 0.3
+rec_batch_num: 6
+
+# Preprocessing (usa configuração específica para PaddleOCR)
+preprocessing: ppro-paddleocr

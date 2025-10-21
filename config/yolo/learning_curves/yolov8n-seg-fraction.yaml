@@ -1,0 +1,76 @@
+# ========================================
+# YOLOv8n-seg Fraction Training - TCC
+# Treinamento com fração de dados para análise de curva de aprendizado
+# ========================================
+
+# Configurações básicas
+model: yolov8n-seg.pt
+task: segment
+imgsz: 640
+batch: 8
+device: 0
+
+# Épocas (ajustadas para frações)
+epochs: 100  # Épocas fixas para comparação justa
+
+# Learning rate
+lr0: 0.01
+lrf: 0.01
+momentum: 0.937
+weight_decay: 0.0005
+
+# Optimizer
+optimizer: SGD
+
+# Training settings
+patience: 50
+workers: 4
+cache: false
+save: true
+save_period: 10
+exist_ok: true
+
+# Loss gains
+box: 7.5
+cls: 0.5
+dfl: 1.5
+
+# Data augmentation (CONSISTENTE para todas as frações)
+augmentation: true
+hsv_h: 0.015
+hsv_s: 0.7
+hsv_v: 0.4
+degrees: 10.0
+translate: 0.1
+scale: 0.5
+shear: 0.0
+perspective: 0.0
+flipud: 0.0
+fliplr: 0.5
+mosaic: 1.0
+mixup: 0.1
+copy_paste: 0.0
+
+# Validation settings
+val: true
+plots: true
+rect: false
+
+# Project settings
+project: experiments/learning_curves
+# name será definido dinamicamente: nano_fraction_25, nano_fraction_50, etc.
+
+# Inference settings
+conf: 0.25
+iou: 0.7
+
+# ========================================
+# NOTAS IMPORTANTES:
+# ========================================
+# • Configuração IDÊNTICA para todas as frações
+# • Apenas quantidade de dados varia
+# • Permite comparação justa de curvas de aprendizado
+# • Batch size pequeno (8) para estabilidade
+# • Augmentation consistente
+# • 100 épocas fixas para todas as frações
+# ========================================

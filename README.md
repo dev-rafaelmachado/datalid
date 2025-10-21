@@ -32,6 +32,7 @@ make install-all
 
 ## Principais Comandos
 
+### Processamento e Treinamento Básico
 ```bash
 make quick-process        # Processa dados rapidamente
 make train-quick          # Treina modelo de segmentação
@@ -39,8 +40,26 @@ make validate-segment     # Valida dataset segmentado
 make tensorboard          # Inicia monitoramento de métricas
 ```
 
+### 📊 Análise de Curvas de Aprendizado (Novo!)
+```bash
+# Workflow completo: valida se os modelos estão realmente aprendendo
+make workflow-learning-curves        # Todos os modelos (12 treinamentos)
+make workflow-learning-curves-quick  # Apenas Nano (teste rápido)
+
+# Comandos individuais
+make process-fractions              # Cria datasets com 25%, 50%, 75%, 100%
+make train-fractions-nano           # Treina Nano em todas as frações
+make train-fractions-small          # Treina Small em todas as frações
+make train-fractions-medium         # Treina Medium em todas as frações
+make compare-learning-curves        # Analisa e compara resultados
+```
+
 ## Documentação
-Acesse a pasta `docs/` para guias completos sobre processamento, treinamento, validação, análise de erros e solução de problemas.
+Acesse a pasta `docs/` para guias completos:
+- **LEARNING_CURVES.md** - Sistema de análise de curvas de aprendizado ⭐ NOVO
+- Processamento, treinamento, validação
+- Análise de erros e solução de problemas
+- Comparação de modelos e métricas
 
 ---
 

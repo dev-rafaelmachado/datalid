@@ -1,0 +1,14 @@
+# EasyOCR específico
+engine: easyocr
+languages: ['pt', 'en']
+gpu: true
+model_storage_directory: 'models/easyocr'
+download_enabled: true
+
+# Config
+batch_size: 1
+workers: 4
+paragraph: false
+
+# Preprocessing (usa configuração específica para EasyOCR)
+preprocessing: ppro-easyocr

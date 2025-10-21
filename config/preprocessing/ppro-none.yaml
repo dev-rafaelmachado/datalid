@@ -1,0 +1,30 @@
+# ⚙️ Sem pré-processamento (baseline)
+name: ppro-none
+
+steps:
+  normalize_colors:
+    enabled: false
+
+  resize:
+    enabled: false
+
+  grayscale:
+    enabled: false
+
+  deskew:
+    enabled: false
+
+  clahe:
+    enabled: false
+
+  sharpen:
+    enabled: false
+
+  threshold:
+    enabled: false
+
+  denoise:
+    enabled: false
+
+  padding:
+    enabled: false

@@ -1,0 +1,47 @@
+# TrOCR (Transformer OCR) específico
+engine: trocr
+
+# Modelo Hugging Face
+model_name: 'microsoft/trocr-base-printed'
+# Alternativas:
+# - microsoft/trocr-base-handwritten
+# - microsoft/trocr-large-printed
+
+# Device
+device: 'cuda'  # ou 'cpu'
+
+# Configuração
+max_length: 64
+batch_size: 1
+
+# Preprocessing (usa configuração específica para TrOCR)
+preprocessing: ppro-trocr
+resize_height: 384
+resize_width: 384
+
+# 🔆 Normalização Fotométrica (NOVA)
+enable_photometric_norm: true
+photometric_normalizer:
+  # Normalização de brilho (resolve imagens muito brilhantes/escuras)
+  brightness_normalize: true
+  target_brightness: 130  # Alvo de brilho médio (0-255)
+  
+  # Remoção de sombras
+  shadow_removal: true
+  
+  # CLAHE (Contrast Limited Adaptive Histogram Equalization)
+  clahe_enabled: true
+  clahe_clip_limit: 1.5
+  clahe_tile_grid: [8, 8]
+  
+  # Denoising
+  denoise_method: 'bilateral'  # 'bilateral', 'median', ou 'none'
+  
+  # Sharpening (opcional)
+  sharpen_enabled: false
+  sharpen_strength: 0.3
+
+# Output
+save_preprocessed: false
+save_text_output: true
+verbose: true

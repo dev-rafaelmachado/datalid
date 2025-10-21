@@ -3,6 +3,11 @@ ultralytics>=8.0.100
 # torch>=2.0.0
 torchvision>=0.15.0
 
+# OCR Engines
+# PARSeq TINE (Tiny Efficient) - carregado via torch.hub
+# Repositório: baudm/parseq
+# Requer: torch, torchvision, PIL
+
 # Computer Vision
 opencv-python>=4.8.0
 Pillow>=10.0.0

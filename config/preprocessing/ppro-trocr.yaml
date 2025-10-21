@@ -1,0 +1,52 @@
+# ⚙️ Pré-processamento otimizado para TrOCR (Transformer OCR)
+name: ppro-trocr
+
+steps:
+  normalize_colors:
+    enabled: true
+    method: gray_world  # Mantém cores naturais, sem exagero
+
+  # 🔆 NOVA: Normalização de brilho (resolve imagens muito brilhantes/escuras)
+  brightness_normalize:
+    enabled: true
+    target_brightness: 130  # Alvo de brilho médio (0-255)
+
+  resize:
+    enabled: true
+    min_height: 64
+    min_width: 256
+    maintain_aspect: true
+    interpolation: lanczos
+
+  grayscale:
+    enabled: false
+
+  deskew:
+    enabled: true
+    method: contours
+    max_angle: 20  # Pequenas rotações são toleradas pelo modelo
+
+  clahe:
+    enabled: true  # Ativar CLAHE leve para melhor contraste
+    clip_limit: 1.5
+    tile_grid: [8, 8]
+
+  sharpen:
+    enabled: true
+    method: unsharp_mask
+    strength: 0.8  # Apenas nitidez leve
+
+  threshold:
+    enabled: false
+
+  denoise:
+    enabled: true
+    method: bilateral
+    d: 5
+    sigma_color: 50
+    sigma_space: 50
+
+  padding:
+    enabled: true
+    size: 20
+    color: [255, 255, 255]

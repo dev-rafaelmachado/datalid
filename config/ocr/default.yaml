@@ -1,0 +1,14 @@
+# Configuração padrão OCR
+engine: paddleocr
+preprocessing: ppro-paddleocr  # Usa pré-processamento otimizado para PaddleOCR
+confidence_threshold: 0.7
+languages: ['pt', 'en']
+
+# Device
+use_gpu: true
+gpu_id: 0
+
+# Output
+save_preprocessed: false
+save_text_output: true
+verbose: true

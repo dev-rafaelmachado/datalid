@@ -1,0 +1,59 @@
+name: ppro-parseq-color-aware
+
+steps:
+  resize:
+    enabled: true
+    min_height: 64
+    min_width: 128
+    maintain_aspect: true
+    interpolation: linear
+
+  # Grayscale mantém contraste de tons médios
+  grayscale:
+    enabled: true
+
+  # CLAHE para realçar contraste sem exagerar
+  clahe:
+    enabled: true
+    clip_limit: 1.5
+    tile_grid_size: [8, 8]
+
+  # Denoise leve (reduz textura sem borrar letras)
+  denoise:
+    enabled: true
+    method: bilateral
+    d: 7
+    sigma_color: 50
+    sigma_space: 50
+
+  # Deskew continua útil para inclinações
+  deskew:
+    enabled: true
+    method: projection
+    max_angle: 10
+
+  # Shadow removal desativado (mata o contraste nesse caso)
+  shadow_removal:
+    enabled: false
+
+  # Sharpen desligado — opcional ligar em casos de texto muito fino
+  sharpen:
+    enabled: false
+    method: unsharp_mask
+    strength: 0.3
+
+  # Invert desativado — mantém texto escuro sobre claro
+  invert:
+    enabled: false
+
+  # Threshold leve só se o contraste for ruim
+  threshold:
+    enabled: false
+    method: adaptive_gaussian
+    block_size: 31
+    c: 4
+
+  padding:
+    enabled: true
+    size: 6
+    color: 255

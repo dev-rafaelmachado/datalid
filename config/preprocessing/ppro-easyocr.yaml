@@ -1,0 +1,45 @@
+# ⚙️ Pré-processamento otimizado para EasyOCR
+name: ppro-easyocr
+
+steps:
+  normalize_colors:
+    enabled: true
+    method: gray_world  # Mais neutro e realista que white balance simples
+
+  resize:
+    enabled: true
+    min_height: 48
+    min_width: 200
+    maintain_aspect: true
+    interpolation: cubic
+
+  grayscale:
+    enabled: false  # Deep learning usa informação de cor
+
+  deskew:
+    enabled: true
+    method: hough
+    max_angle: 20  # Limita rotação, pois EasyOCR é tolerante
+
+  clahe:
+    enabled: false  # Evita ruído e granulação no fundo
+
+  sharpen:
+    enabled: true
+    method: unsharp_mask
+    strength: 0.7  # Sutil pra não gerar halos
+
+  threshold:
+    enabled: false  # Deep learning precisa de textura original
+
+  denoise:
+    enabled: true
+    method: bilateral
+    d: 5
+    sigma_color: 40
+    sigma_space: 40
+
+  padding:
+    enabled: true
+    size: 10
+    color: [255, 255, 255]

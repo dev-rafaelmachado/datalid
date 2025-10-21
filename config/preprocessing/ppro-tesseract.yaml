@@ -1,0 +1,48 @@
+# ⚙️ Pré-processamento otimizado para Tesseract OCR
+name: ppro-tesseract
+
+steps:
+  normalize_colors:
+    enabled: true
+    method: histogram_equalization  # Melhora contraste global
+
+  resize:
+    enabled: true
+    min_height: 64
+    min_width: 300
+    maintain_aspect: true
+    interpolation: cubic
+
+  grayscale:
+    enabled: true
+
+  deskew:
+    enabled: true
+    method: projection
+    max_angle: 45
+
+  clahe:
+    enabled: true
+    clip_limit: 2.0  # 3.0 era forte e podia criar granulação
+    tile_grid_size: [8, 8]
+
+  sharpen:
+    enabled: true
+    method: unsharp_mask
+    strength: 1.0
+
+  threshold:
+    enabled: true
+    method: adaptive_gaussian
+    block_size: 35  # Aumenta pra reduzir ruído
+    c: 5
+
+  denoise:
+    enabled: true
+    method: median  # Remove ruído isolado sem afetar letras
+    kernel_size: 3
+
+  padding:
+    enabled: true
+    size: 15
+    color: 255

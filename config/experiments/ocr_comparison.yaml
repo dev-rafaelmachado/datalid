@@ -1,0 +1,34 @@
+# Experimento: Comparação de OCRs
+name: ocr_comparison_experiment
+description: Comparar Tesseract, EasyOCR, PaddleOCR, TrOCR e PARSeq TINE
+
+dataset:
+  path: data/ocr_test/images
+  ground_truth: data/ocr_test/ground_truth.json
+  size: 50
+
+ocr_engines:
+  - tesseract
+  - easyocr
+  - paddleocr
+  - trocr
+  - parseq  # PARSeq TINE (Tiny Efficient)
+
+preprocessing_levels:
+  - ppro-none
+  - ppro-tesseract
+  - ppro-easyocr
+  - ppro-paddleocr
+  - ppro-trocr
+  - ppro-parseq  # Otimizado para PARSeq TINE
+
+metrics:
+  - exact_match
+  - partial_match
+  - character_error_rate
+  - processing_time
+
+output:
+  save_to: outputs/ocr_benchmarks/comparison_results.csv
+  generate_plots: true
+  save_examples: true

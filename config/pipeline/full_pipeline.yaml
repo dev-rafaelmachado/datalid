@@ -1,0 +1,26 @@
+# Pipeline completo: YOLO → OCR → Parse
+name: expiry_date_full_pipeline
+
+# Detecção (YOLO)
+detection:
+  model_path: models/detection/yolov8s-seg/best.pt
+  confidence: 0.25
+  iou: 0.7
+  device: 0
+
+# OCR
+ocr:
+  config: configs/ocr/paddleocr.yaml
+  preprocessing: configs/preprocessing/ppro-paddleocr.yaml
+
+# Parsing
+parsing:
+  date_formats:
+    - '%d/%m/%Y'
+    - '%d/%m/%y'
+    - '%d.%m.%Y'
+    - '%d-%m-%Y'
+  validation:
+    min_year: 2024
+    max_year: 2030
+    allow_past: false

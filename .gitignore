@@ -27,12 +27,12 @@ ENV/
 env/
 
 # PyTorch
-*.pth
-*.pt
+# *.pth
+# *.pt
 !configs/*.pt
 
 # Experiments (keep structure, ignore large files)
-experiments/*/weights/*.pt
+# experiments/*/weights/*.pt
 experiments/*/runs/
 
 # Datasets (raw data from Roboflow)
@@ -82,3 +82,14 @@ htmlcov/
 !/data/raw/.gitkeep
 /data/processed/*
 !/data/processed/.gitkeep
+
+# outputs
+experiments/**/*.jpg
+experiments/**/*.png
+
+outputs/**/*.jpg
+outputs/**/*.png
+
+*.pt
+*.csv
+*.json

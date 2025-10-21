@@ -1,0 +1,219 @@
+# ========================================
+# Enhanced PARSeq - Configuração Simplificada
+# Para configuração completa com fine-tuning, veja parseq_enhanced_full.yaml
+# ========================================
+
+name: parseq_enhanced
+
+# Preset ativo (sobrescreve configurações abaixo)
+# Opções: 'fast', 'balanced', 'high_quality', 'ablation', null
+active_preset: balanced  # null para usar config manual abaixo
+
+# ========================================
+# MODELO BASE
+# ========================================
+model_name: parseq  # 'parseq_tiny', 'parseq', 'parseq_patch16_224'
+device: cuda  # 'cuda' ou 'cpu'
+img_height: 32
+img_width: 128
+max_length: 25
+batch_size: 1
+
+# ========================================
+# PIPELINE FEATURES
+# ========================================
+enable_line_detection: true
+enable_geometric_norm: true
+enable_photometric_norm: true
+enable_ensemble: true
+enable_postprocessing: true
+
+ensemble_strategy: rerank  # 'confidence', 'voting', 'rerank', 'none'
+
+# ========================================
+# LINE DETECTOR
+# ========================================
+line_detector:
+  method: hybrid  # 'projection', 'clustering', 'morphology', 'hybrid'
+  min_line_height: 10
+  max_line_gap: 5
+  dbscan_eps: 15
+  min_component_width: 5
+  morphology_kernel_width: 50
+  filter_noise: true
+  min_char_count: 2
+
+# ========================================
+# GEOMETRIC NORMALIZER
+# ========================================
+geometric_normalizer:
+  enable_deskew: true
+  max_angle: 10
+  deskew_method: hough      # 'hough', 'moments', 'projection'
+  enable_perspective: false
+  target_heights: [32, 64]
+  maintain_aspect: true
+  add_padding: true
+  padding_ratio: 0.1
+
+# ========================================
+# PHOTOMETRIC NORMALIZER
+# ========================================
+photometric_normalizer:
+  denoise_method: bilateral  # 'median', 'bilateral', 'none'
+  bilateral_d: 5
+  bilateral_sigma_color: 75
+  bilateral_sigma_space: 75
+  shadow_removal: true
+  shadow_kernel_size: 15
+  clahe_enabled: true
+  clahe_clip_limit: 1.5
+  clahe_tile_grid: [8, 8]
+  sharpen_enabled: false
+  sharpen_strength: 0.3
+  auto_invert: true
+
+# ========================================
+# ENSEMBLE & RERANKING
+# ========================================
+ensemble:
+  num_variants: 3
+  variant_types:
+    - height
+    - clahe
+    - denoise
+  
+  reranker:
+    method: weighted
+    weights:
+      confidence: 0.35
+      length_ratio: 0.15
+      dict_match: 0.25
+      consensus: 0.25
+    
+    expected_terms:
+      - "LOTE"
+      - "VALIDADE"
+      - "FABRICACAO"
+      - "FAB"
+      - "VAL"
+    
+    expected_patterns:
+      - 'LOT[EO]?\s*\.?\s*\d+'
+      - '\d{1,2}[/-]\d{1,2}[/-]\d{2,4}'
+      - '[A-Z]{2,}\s*\d+'
+
+# ========================================
+# CONTEXTUAL POSTPROCESSOR
+# ========================================
+postprocessor:
+  uppercase: true
+  remove_symbols: false
+  trim_whitespace: true
+  ambiguity_mapping: true
+  ambiguity_rules:
+    - ['O', '0', 'context']
+    - ['I', '1', 'context']
+    - ['S', '5', 'context']
+  
+  fix_formats: true
+  expected_formats:
+    - pattern: 'LOT[EO]?\s*\.?\s*\d+'
+      example: "LOTE 12345"
+      priority: high
+    - pattern: '\d{1,2}[/-]\d{1,2}[/-]\d{2,4}'
+      example: "12/06/2025"
+      priority: high
+    - pattern: '[A-Z]{2,}\s*\d+'
+      example: "VAL 123"
+      priority: medium
+  
+  fuzzy_matching: true
+  fuzzy_threshold: 0.8
+  fuzzy_dict:
+    - "LOTE"
+    - "VALIDADE"
+    - "FABRICACAO"
+  
+  domain_corrections:
+    enabled: true
+    rules:
+      - from: "L0TE"
+        to: "LOTE"
+      - from: "VAL1DADE"
+        to: "VALIDADE"
+
+# ========================================
+# EVALUATION
+# ========================================
+evaluation:
+  metrics:
+    - cer
+    - wer
+    - accuracy
+    - confidence
+  
+  error_analysis:
+    enabled: true
+    output_dir: "outputs/error_analysis"
+  
+  compare_baseline: false
+
+# ========================================
+# LOGGING
+# ========================================
+logging:
+  level: INFO
+  verbose: true
+  show_progress: true
+  save_visualizations: true
+  viz_output_dir: "outputs/visualizations"
+
+# ========================================
+# PERFORMANCE
+# ========================================
+performance:
+  num_workers: 4
+  cache_preprocessed: true
+  cache_dir: "cache/parseq"
+  batch_inference: true
+  optimal_batch_size: 8
+
+# ========================================
+# PRESETS (Configurações Pré-definidas)
+# ========================================
+presets:
+  # Modo rápido (para testes)
+  fast:
+    model_name: parseq_tiny
+    enable_line_detection: true
+    enable_geometric_norm: true
+    enable_photometric_norm: false
+    enable_ensemble: false
+    enable_postprocessing: true
+  
+  # Modo balanceado (padrão)
+  balanced:
+    model_name: parseq
+    enable_line_detection: true
+    enable_geometric_norm: true
+    enable_photometric_norm: true
+    enable_ensemble: true
+    enable_postprocessing: true
+    ensemble:
+      num_variants: 3
+  
+  # Modo máxima qualidade (mais lento)
+  high_quality:
+    model_name: parseq_patch16_224
+    enable_line_detection: true
+    enable_geometric_norm: true
+    enable_photometric_norm: true
+    enable_ensemble: true
+    enable_postprocessing: true
+    ensemble:
+      num_variants: 5
+  
+  # Modo ablation (para estudos)
+  ablation:
+    run_all_combinations: true

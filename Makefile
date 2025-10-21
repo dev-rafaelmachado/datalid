@@ -91,7 +91,7 @@ help:
 	@echo "  train-detect-small   Treina YOLOv8s (bbox apenas)"
 	@echo "  train-detect-medium  Treina YOLOv8m (bbox apenas)"
 	@echo ""
-	@echo "$(GREEN)🎛️ TREINAMENTO - SISTEMA NOVO:$(RESET)"
+	@echo "$(GREEN)🎛️ TREINAMENTO $(RESET)"
 	@echo "  train-quick          Teste rápido SEGMENTAÇÃO (10 épocas) ⭐"
 	@echo "  train-quick-detect   Teste rápido Detecção (10 épocas)"
 	@echo "  train-dev            Desenvolvimento SEGMENTAÇÃO ⭐"
@@ -103,32 +103,50 @@ help:
 	@echo "  train-compare-detect Treina modelos detecção (comparação)"
 	@echo "  train-overnight      Treinamento overnight segmentação (200 épocas) ⭐"
 	@echo ""
-	@echo "$(GREEN)📊 ANÁLISE E COMPARAÇÃO:$(RESET)"
-	@echo "  tensorboard          Inicia TensorBoard"
-	@echo "  compare-models       Compara todos os modelos treinados ⭐"
-	@echo "  compare-segments     Compara modelos de segmentação ⭐"
-	@echo "  compare-detects      Compara modelos de detecção"
-	@echo "  analyze-errors       Análise de erros (requer MODEL= DATA=) ⭐"
-	@echo "  analyze-best-model   Análise automática do último modelo ⭐"
-	@echo "  help-analysis        Ajuda sobre análise e comparação"
+	@echo "$(GREEN)📊 CURVA DE APRENDIZADO (LEARNING CURVES):$(RESET)"
+	@echo "  process-fractions    Cria datasets com frações (25%, 50%, 75%, 100%) ⭐"
+	@echo "  train-fractions-nano Treina YOLOv8n-seg em todas as frações ⭐"
+	@echo "  train-fractions-small Treina YOLOv8s-seg em todas as frações ⭐"
+	@echo "  train-fractions-medium Treina YOLOv8m-seg em todas as frações ⭐"
+	@echo "  train-all-fractions  Treina TODOS os modelos em todas as frações ⭐"
+	@echo "  compare-learning-curves Analisa e compara curvas de aprendizado ⭐"
 	@echo ""
-	@echo "$(GREEN)� PREDIÇÃO/INFERÊNCIA:$(RESET)"
-	@echo "  predict-latest       Predição com último modelo (IMAGE=) ⭐"
-	@echo "  test-inference       Teste rápido (MODEL= IMAGE=) ⭐"
-	@echo "  predict-image        Predição em uma imagem (MODEL= IMAGE=)"
-	@echo "  predict-dir          Predição em diretório (MODEL= DIR=)"
-	@echo "  predict-batch        Predição em lote (MODEL= IMAGES='...')"
+	@echo "$(GREEN)� OCR (OPTICAL CHARACTER RECOGNITION):$(RESET)"
+	@echo "  ocr-setup            Instala engines OCR ⭐"
+	@echo "  ocr-prepare-data     Prepara dataset OCR a partir de detecções YOLO ⭐"
+	@echo "  ocr-annotate         Interface para anotar ground truth ⭐"
+	@echo "  ocr-test             Testa um engine específico (ENGINE=paddleocr PREP=medium) ⭐"
+	@echo "  ocr-compare          Compara engines (ENGINE=tesseract PREP=heavy) ⭐"
+	@echo "  ocr-benchmark        Benchmark completo de todos os engines"
 	@echo ""
-	@echo "$(GREEN)�🚀 API E DEPLOY:$(RESET)"
-	@echo "  run-api              Inicia API de desenvolvimento"
-	@echo "  build-docker         Constrói imagem Docker"
-	@echo "  run-docker           Executa container Docker"
+	@echo "$(CYAN)  PARSeq - Escolha o modelo ideal:$(RESET)"
+	@echo "  ocr-parseq           Testa PARSeq BASE (melhor multi-linha) ✅ RECOMENDADO"
+	@echo "  ocr-parseq-tiny      Testa PARSeq TINY (rápido, ⚠️ ruim multi-linha)"
+	@echo "  ocr-parseq-base      Testa PARSeq BASE (melhor multi-linha) ⭐"
+	@echo "  ocr-parseq-large     Testa PARSeq LARGE (máxima precisão) 🏆"
+	@echo "  ocr-parseq-compare   Compara TODOS os modelos PARSeq 📊"
+	@echo "  ocr-parseq-analyze   Analisa resultados (sem rodar testes) 📈"
+	@echo "  ocr-parseq-setup     Configura e baixa TODOS os modelos PARSeq"
+	@echo "  ocr-parseq-validate  Valida implementação completa do PARSeq"
 	@echo ""
-	@echo "$(GREEN)🧹 LIMPEZA:$(RESET)"
-	@echo "  clean                Remove arquivos temporários"
-	@echo "  clean-data           Remove dados processados"
-	@echo "  clean-models         Remove modelos treinados"
-	@echo "  clean-all            Limpeza completa"
+	@echo "$(MAGENTA)  🚀 Enhanced PARSeq - Pipeline Robusto (NOVO):$(RESET)"
+	@echo "  ocr-enhanced-demo             Demo interativo (IMAGE=test.jpg) ⭐⭐⭐"
+	@echo "  ocr-enhanced                  Teste completo (balanceado) ⭐"
+	@echo "  ocr-enhanced-fast             Modo rápido (sem ensemble)"
+	@echo "  ocr-enhanced-quality          Modo alta qualidade (lento)"
+	@echo "  ocr-enhanced-batch            Processar diretório (DIR=...) 📦"
+	@echo "  ocr-enhanced-ablation         Estudo de ablação 🔬"
+	@echo "  ocr-enhanced-vs-baseline      Comparar vs baseline 📊"
+	@echo "  ocr-enhanced-finetune         Fine-tuning 🎓"
+	@echo "  workflow-enhanced-parseq      Workflow completo 🎯"
+	@echo "  help-enhanced-parseq          Ajuda detalhada"
+	@echo ""
+	@echo "$(CYAN)  Outros comandos OCR:$(RESET)"
+	@echo "  ocr-trocr            Testa TrOCR (microsoft/trocr-base-printed) ✅ COM normalização"
+	@echo "  ocr-trocr-quick      Teste rápido TrOCR (10 imagens) ⚡"
+	@echo "  ocr-trocr-benchmark  Benchmark completo do TrOCR 🏆"
+	@echo "  ocr-trocr-validate-brightness  Valida normalização de brilho 🔆"
+	@echo ""
 
 # ========================================
 # 📦 INSTALAÇÃO
@@ -153,14 +171,7 @@ install-all: install install-dev
 .PHONY: test-cuda validate-env test test-cov test-tensorboard
 test-cuda:
 	@echo "$(YELLOW)🧪 Testando CUDA/GPU...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/test_cuda.py
-
-test-tensorboard:
-	@echo "$(YELLOW)🧪 Testando TensorBoard em Tempo Real com treinamento REAL...$(RESET)"
-	@echo "$(CYAN)📊 Este teste irá treinar um modelo por 5 épocas$(RESET)"
-	@echo "$(CYAN)🔍 Abra outro terminal e execute: tensorboard --logdir=experiments$(RESET)"
-	@echo ""
-	$(PYTHON) $(SCRIPTS_DIR)/test_tensorboard_realtime.py
+	$(PYTHON) $(SCRIPTS_DIR)/setup/test_cuda.py
 
 validate-env:
 	@echo "$(YELLOW)🔍 Validando ambiente...$(RESET)"
@@ -182,18 +193,18 @@ test-cov:
 
 validate-segment:
 	@echo "$(BLUE)✅ Validando dataset de SEGMENTAÇÃO...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/validate_dataset.py $(DATA_DIR)/processed/v1_segment --detailed
+	$(PYTHON) $(SCRIPTS_DIR)/data/validate_dataset.py $(DATA_DIR)/processed/v1_segment --detailed
 
 validate-detect:
 	@echo "$(BLUE)✅ Validando dataset de DETECÇÃO...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/validate_dataset.py $(DATA_DIR)/processed/v1_detect --detailed
+	$(PYTHON) $(SCRIPTS_DIR)/data/validate_dataset.py $(DATA_DIR)/processed/v1_detect --detailed
 
 # Diagnóstico de labels (para identificar problemas)
 .PHONY: diagnose diagnose-raw
 
 diagnose:
 	@echo "$(YELLOW)🔍 Diagnosticando labels processados...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/diagnose_labels.py $(DATA_DIR)/processed/v1_segment
+	$(PYTHON) $(SCRIPTS_DIR)/data/diagnose_labels.py $(DATA_DIR)/processed/v1_segment
 
 diagnose-raw:
 	@echo "$(YELLOW)🔍 Diagnosticando labels RAW...$(RESET)"
@@ -201,7 +212,7 @@ ifndef INPUT
 	@echo "$(RED)❌ Erro: Especifique INPUT=caminho_dos_dados_raw$(RESET)"
 	@exit 1
 endif
-	$(PYTHON) $(SCRIPTS_DIR)/diagnose_labels.py "$(INPUT)"
+	$(PYTHON) $(SCRIPTS_DIR)/data/diagnose_labels.py "$(INPUT)"
 
 # ========================================
 # 🔄 PROCESSAMENTO DE DADOS
@@ -211,14 +222,14 @@ endif
 
 validate-dataset:
 	@echo "$(BLUE)✅ Validação interativa de dataset...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/validate_dataset.py --help
+	$(PYTHON) $(SCRIPTS_DIR)/data/validate_dataset.py --help
 	@echo ""
 	@echo "$(CYAN)Exemplo de uso:$(RESET)"
-	@echo "$(PYTHON) $(SCRIPTS_DIR)/validate_dataset.py data/processed/v1_segment --detailed"
+	@echo "$(PYTHON) $(SCRIPTS_DIR)/data/validate_dataset.py data/processed/v1_segment --detailed"
 
 quick-process:
 	@echo "$(BLUE)🔄 Processamento rápido (70/20/10) - SEGMENTAÇÃO...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/process_raw_data.py \
+	$(PYTHON) $(SCRIPTS_DIR)/data/process_raw_data.py \
 		--raw-path $(DATA_DIR)/raw \
 		--output-path $(DATA_DIR)/processed/v1_segment \
 		--preset balanced \
@@ -228,7 +239,7 @@ quick-process:
 
 quick-detect:
 	@echo "$(BLUE)🔄 Processamento rápido (70/20/10) - DETECÇÃO...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/process_raw_data.py \
+	$(PYTHON) $(SCRIPTS_DIR)/data/process_raw_data.py \
 		--raw-path $(DATA_DIR)/raw \
 		--output-path $(DATA_DIR)/processed/v1_detect \
 		--preset balanced \
@@ -241,7 +252,7 @@ quick-process-detect: quick-detect
 
 research-process:
 	@echo "$(BLUE)🔄 Processamento para pesquisa (80/10/10) - SEGMENTAÇÃO...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/process_raw_data.py \
+	$(PYTHON) $(SCRIPTS_DIR)/data/process_raw_data.py \
 		--raw-path $(DATA_DIR)/raw \
 		--output-path $(DATA_DIR)/processed/v1_segment \
 		--preset research \
@@ -249,251 +260,123 @@ research-process:
 		--validate-raw \
 		--validate-output
 
-# Processamento de dados com divisão customizável (SEGMENTAÇÃO padrão) ⭐
-process:
-	@echo "$(GREEN)🔄 Processamento de dados - SEGMENTAÇÃO POLIGONAL (padrão)...$(RESET)"
-ifndef INPUT
-	@echo "$(RED)❌ Erro: Especifique INPUT=caminho_dos_dados_raw$(RESET)"
-	@exit 1
-endif
-	$(PYTHON) $(SCRIPTS_DIR)/process_raw_data.py \
-		--input "$(INPUT)" \
-		--output $(DATA_DIR)/processed \
-		--train-split $(TRAIN_SPLIT) \
-		--val-split $(VAL_SPLIT) \
-		--test-split $(TEST_SPLIT) \
-		--task segment \
-		--validate \
-		--preview
-
-# Alias para compatibilidade
-process-data: process
-process-segment: process
-
-# Processamento APENAS detecção
-process-detect:
-	@echo "$(GREEN)🔄 Processamento de dados - DETECÇÃO...$(RESET)"
-ifndef INPUT
-	@echo "$(RED)❌ Erro: Especifique INPUT=caminho_dos_dados_raw$(RESET)"
-	@exit 1
-endif
-	$(PYTHON) $(SCRIPTS_DIR)/process_raw_data.py \
-		--input "$(INPUT)" \
-		--output $(DATA_DIR)/processed \
-		--train-split $(TRAIN_SPLIT) \
-		--val-split $(VAL_SPLIT) \
-		--test-split $(TEST_SPLIT) \
-		--task detect \
-		--validate \
-		--preview
-
-# Processar dados sem preview (SEGMENTAÇÃO) ⭐
-process-auto:
-	@echo "$(GREEN)🔄 Processamento automático - SEGMENTAÇÃO POLIGONAL...$(RESET)"
-ifndef INPUT
-	@echo "$(RED)❌ Erro: Especifique INPUT=caminho_dos_dados_raw$(RESET)"
-	@exit 1
-endif
-	$(PYTHON) $(SCRIPTS_DIR)/process_raw_data.py \
-		--input "$(INPUT)" \
-		--output $(DATA_DIR)/processed \
-		--train-split $(TRAIN_SPLIT) \
-		--val-split $(VAL_SPLIT) \
-		--test-split $(TEST_SPLIT) \
-		--task segment \
-		--validate
-
-# Alias para compatibilidade
-process-data-auto: process-auto
-
-# Processar AMBOS (segmentação + detecção)
-process-both:
-	@echo "$(GREEN)🔄 Processamento COMPLETO (SEGMENTAÇÃO + DETECÇÃO)...$(RESET)"
-ifndef INPUT
-	@echo "$(RED)❌ Erro: Especifique INPUT=caminho_dos_dados_raw$(RESET)"
-	@exit 1
-endif
-	$(PYTHON) $(SCRIPTS_DIR)/process_raw_data.py \
-		--input "$(INPUT)" \
-		--output $(DATA_DIR)/processed \
-		--train-split $(TRAIN_SPLIT) \
-		--val-split $(VAL_SPLIT) \
-		--test-split $(TEST_SPLIT) \
-		--task both \
-		--validate
-
 # ========================================
-# 🤖 TREINAMENTO
+# 📊 PROCESSAMENTO COM FRAÇÕES (LEARNING CURVES)
 # ========================================
 
-.PHONY: train-nano train-small train-medium train-detect-nano train-detect-small train-detect-medium
+# Configurações padrão para frações
+BASE_DATA := data/processed/v1_segment
+FRACTIONS_DIR := data/processed/fractions
+FRACTIONS := 0.25 0.50 0.75
 
-# COMANDOS PRINCIPAIS - SEGMENTAÇÃO ⭐ (USA CONFIGURAÇÕES DOS YAMLs)
-train-nano:
-	@echo "$(MAGENTA)🏃‍♂️ Treinando YOLOv8n-seg (SEGMENTAÇÃO - carregando config YAML)...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/segmentation/yolov8n-seg.yaml \
-		--data-path $(DATA_DIR)/processed/v1_segment \
-		--name yolov8n_seg_baseline
+# Configurações para treinamento com frações
+FRACTION_CONFIG_DIR := config/yolo/learning_curves
+FRACTION_EPOCHS := 100
 
-train-small:
-	@echo "$(MAGENTA)🚀 Treinando YOLOv8s-seg (SEGMENTAÇÃO - carregando config YAML)...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/segmentation/yolov8s-seg.yaml \
-		--data-path $(DATA_DIR)/processed/v1_segment \
-		--name yolov8s_seg_final
+.PHONY: process-fractions clean-fractions
+process-fractions:
+	@echo "$(GREEN)📊 Criando datasets com frações dos dados...$(RESET)"
+	@echo "$(CYAN)Base: $(BASE_DATA)$(RESET)"
+	@echo "$(CYAN)Saída: $(FRACTIONS_DIR)$(RESET)"
+	@echo "$(CYAN)Frações: $(FRACTIONS)$(RESET)"
+	@echo ""
+	$(PYTHON) $(SCRIPTS_DIR)/data/process_with_fraction.py \
+		--base-data $(BASE_DATA) \
+		--output-dir $(FRACTIONS_DIR) \
+		--fractions $(FRACTIONS) \
+		--seed 42
 
-train-medium:
-	@echo "$(MAGENTA)🎯 Treinando YOLOv8m-seg (SEGMENTAÇÃO - carregando config YAML)...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/segmentation/yolov8m-seg.yaml \
-		--data-path $(DATA_DIR)/processed/v1_segment \
-		--name yolov8m_seg_best
-
-train-all-seg:
-	@echo "$(MAGENTA)🎯 Treinando todos os modelos de segmentação...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/segmentation/yolov8n-seg.yaml \
-		--data-path $(DATA_DIR)/processed/v1_segment \
-		--name yolov8n_seg_baseline
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/segmentation/yolov8s-seg.yaml \
-		--data-path $(DATA_DIR)/processed/v1_segment \
-		--name yolov8s_seg_final
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/segmentation/yolov8m-seg.yaml \
-		--data-path $(DATA_DIR)/processed/v1_segment \
-		--name yolov8m_seg_best
-
-# COMANDOS ALTERNATIVOS - DETECÇÃO BBOX (USA CONFIGURAÇÕES DOS YAMLs)
-train-detect-nano:
-	@echo "$(MAGENTA)📦 Treinando YOLOv8n (DETECÇÃO - carregando config YAML)...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/bbox/yolov8n.yaml \
-		--data-path $(DATA_DIR)/processed/v1_detect \
-		--name yolov8n_detect_baseline
-
-train-detect-small:
-	@echo "$(MAGENTA)📦 Treinando YOLOv8s (DETECÇÃO - carregando config YAML)...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/bbox/yolov8s.yaml \
-		--data-path $(DATA_DIR)/processed/v1_detect \
-		--name yolov8s_detect_final
-
-train-detect-medium:
-	@echo "$(MAGENTA)📦 Treinando YOLOv8m (DETECÇÃO - carregando config YAML)...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/bbox/yolov8m.yaml \
-		--data-path $(DATA_DIR)/processed/v1_detect \
-		--name yolov8m_detect_best
-
-train-all-detect:
-	@echo "$(MAGENTA)🎯 Treinando todos os modelos de detecção...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/bbox/yolov8n.yaml \
-		--data-path $(DATA_DIR)/processed/v1_detect \
-		--name yolov8n_detect_baseline
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/bbox/yolov8s.yaml \
-		--data-path $(DATA_DIR)/processed/v1_detect \
-		--name yolov8s_detect_final
-	$(PYTHON) $(SCRIPTS_DIR)/train_yolo.py \
-		--config $(CONFIG_DIR)/yolo/bbox/yolov8m.yaml \
-		--data-path $(DATA_DIR)/processed/v1_detect \
-		--name yolov8m_detect_best
+clean-fractions:
+	@echo "$(YELLOW)🧹 Removendo datasets fracionados...$(RESET)"
+	@if exist "$(FRACTIONS_DIR)" rmdir /s /q "$(FRACTIONS_DIR)"
+	@echo "$(GREEN)✅ Datasets fracionados removidos!$(RESET)"
 
 # ========================================
-# 🎛️ TREINAMENTO COM SISTEMA NOVO
+# 🏋️ TREINAMENTO COM FRAÇÕES (LEARNING CURVES)
 # ========================================
 
-# Comandos específicos para diferentes cenários
-.PHONY: train-quick train-quick-detect train-dev train-dev-detect
+# Treinar YOLOv8n-seg em todas as frações
+.PHONY: train-fractions-nano
+train-fractions-nano:
+	@echo "$(BLUE)🏋️ Treinando YOLOv8n-seg em todas as frações...$(RESET)"
+	@echo "$(CYAN)📊 Fração 1/3: 25%...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/training/train_yolo.py \
+		--config $(FRACTION_CONFIG_DIR)/yolov8n-seg-fraction.yaml \
+		--data-path $(FRACTIONS_DIR)/fraction_25 \
+		--name learning_curve_nano_0.25 \
+		--project experiments
+	@echo "$(CYAN)📊 Fração 2/3: 50%...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/training/train_yolo.py \
+		--config $(FRACTION_CONFIG_DIR)/yolov8n-seg-fraction.yaml \
+		--data-path $(FRACTIONS_DIR)/fraction_50 \
+		--name learning_curve_nano_0.50 \
+		--project experiments
+	@echo "$(CYAN)📊 Fração 3/3: 75%...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/training/train_yolo.py \
+		--config $(FRACTION_CONFIG_DIR)/yolov8n-seg-fraction.yaml \
+		--data-path $(FRACTIONS_DIR)/fraction_75 \
+		--name learning_curve_nano_0.75 \
+		--project experiments
+	@echo "$(GREEN)✅ YOLOv8n-seg treinado em todas as frações!$(RESET)"
 
-train-quick:
-	@echo "$(CYAN)🧪 Teste rápido SEGMENTAÇÃO (10 épocas)...$(RESET)"
-	python scripts/train_specific.py seg_quick_test --data $(DATA_DIR)/processed/v1_segment --epochs 10
+# Treinar YOLOv8s-seg em todas as frações
+.PHONY: train-fractions-small
+train-fractions-small:
+	@echo "$(BLUE)🏋️ Treinando YOLOv8s-seg em todas as frações...$(RESET)"
+	@echo "$(CYAN)📊 Fração 1/3: 25%...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/training/train_yolo.py \
+		--config $(FRACTION_CONFIG_DIR)/yolov8s-seg-fraction.yaml \
+		--data-path $(FRACTIONS_DIR)/fraction_25 \
+		--name learning_curve_small_0.25 \
+		--project experiments
+	@echo "$(CYAN)📊 Fração 2/3: 50%...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/training/train_yolo.py \
+		--config $(FRACTION_CONFIG_DIR)/yolov8s-seg-fraction.yaml \
+		--data-path $(FRACTIONS_DIR)/fraction_50 \
+		--name learning_curve_small_0.50 \
+		--project experiments
+	@echo "$(CYAN)📊 Fração 3/3: 75%...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/training/train_yolo.py \
+		--config $(FRACTION_CONFIG_DIR)/yolov8s-seg-fraction.yaml \
+		--data-path $(FRACTIONS_DIR)/fraction_75 \
+		--name learning_curve_small_0.75 \
+		--project experiments
+	@echo "$(GREEN)✅ YOLOv8s-seg treinado em todas as frações!$(RESET)"
 
-train-quick-detect:
-	@echo "$(CYAN)🧪 Teste rápido DETECÇÃO (10 épocas)...$(RESET)"
-	python scripts/train_specific.py quick_test --data $(DATA_DIR)/processed/v1_detect --epochs 10
+# Treinar YOLOv8m-seg em todas as frações
+.PHONY: train-fractions-medium
+train-fractions-medium:
+	@echo "$(BLUE)🏋️ Treinando YOLOv8m-seg em todas as frações...$(RESET)"
+	@echo "$(CYAN)📊 Fração 1/3: 25%...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/training/train_yolo.py \
+		--config $(FRACTION_CONFIG_DIR)/yolov8m-seg-fraction.yaml \
+		--data-path $(FRACTIONS_DIR)/fraction_25 \
+		--name learning_curve_medium_0.25 \
+		--project experiments
+	@echo "$(CYAN)📊 Fração 2/3: 50%...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/training/train_yolo.py \
+		--config $(FRACTION_CONFIG_DIR)/yolov8m-seg-fraction.yaml \
+		--data-path $(FRACTIONS_DIR)/fraction_50 \
+		--name learning_curve_medium_0.50 \
+		--project experiments
+	@echo "$(CYAN)📊 Fração 3/3: 75%...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/training/train_yolo.py \
+		--config $(FRACTION_CONFIG_DIR)/yolov8m-seg-fraction.yaml \
+		--data-path $(FRACTIONS_DIR)/fraction_75 \
+		--name learning_curve_medium_0.75 \
+		--project experiments
+	@echo "$(GREEN)✅ YOLOv8m-seg treinado em todas as frações!$(RESET)"
 
-train-dev:
-	@echo "$(BLUE)🔧 Desenvolvimento - SEGMENTAÇÃO...$(RESET)"
-	python scripts/train_specific.py dev_segment --data $(DATA_DIR)/processed/v1_segment
-
-train-dev-detect:
-	@echo "$(BLUE)🔧 Desenvolvimento - DETECÇÃO...$(RESET)"
-	python scripts/train_specific.py dev_detect --data $(DATA_DIR)/processed/v1_detect
-
-# Treinamentos finais para o TCC - SEGMENTAÇÃO POLIGONAL ⭐
-.PHONY: train-final-nano train-final-small train-final-medium
-
-train-final-nano:
-	@echo "$(GREEN)🎓 FINAL TCC - YOLOv8n-seg (SEGMENTAÇÃO)...$(RESET)"
-	python scripts/train_specific.py final_nano_segment --data $(DATA_DIR)/processed/v1_segment
-
-train-final-small:
-	@echo "$(GREEN)🎓 FINAL TCC - YOLOv8s-seg (SEGMENTAÇÃO)...$(RESET)"
-	python scripts/train_specific.py final_small_segment --data $(DATA_DIR)/processed/v1_segment
-
-train-final-medium:
-	@echo "$(GREEN)🎓 FINAL TCC - YOLOv8m-seg (SEGMENTAÇÃO)...$(RESET)"
-	python scripts/train_specific.py final_medium_segment --data $(DATA_DIR)/processed/v1_segment
-
-# Treinamentos finais DETECÇÃO (alternativo)
-.PHONY: train-final-detect-nano train-final-detect-small train-final-detect-medium
-
-train-final-detect-nano:
-	@echo "$(GREEN)🎓 FINAL TCC - YOLOv8n (DETECÇÃO)...$(RESET)"
-	python scripts/train_specific.py final_nano_detect --data $(DATA_DIR)/processed/v1_detect
-
-train-final-detect-small:
-	@echo "$(GREEN)🎓 FINAL TCC - YOLOv8s (DETECÇÃO)...$(RESET)"
-	python scripts/train_specific.py final_small_detect --data $(DATA_DIR)/processed/v1_detect
-
-train-final-detect-medium:
-	@echo "$(GREEN)🎓 FINAL TCC - YOLOv8m (DETECÇÃO)...$(RESET)"
-	python scripts/train_specific.py final_medium_detect --data $(DATA_DIR)/processed/v1_detect
-
-# Comparações - SEGMENTAÇÃO por padrão ⭐
-.PHONY: train-compare-all train-compare-detect
-
-train-compare-all:
-	@echo "$(YELLOW)📊 Treinando todos os modelos SEGMENTAÇÃO para comparação...$(RESET)"
-	python scripts/train_specific.py compare_nano_segment --data $(DATA_DIR)/processed/v1_segment
-	python scripts/train_specific.py compare_small_segment --data $(DATA_DIR)/processed/v1_segment
-	python scripts/train_specific.py compare_medium_segment --data $(DATA_DIR)/processed/v1_segment
-
-train-compare-detect:
-	@echo "$(YELLOW)📊 Treinando todos os modelos DETECÇÃO para comparação...$(RESET)"
-	python scripts/train_specific.py compare_nano --data $(DATA_DIR)/processed/v1_detect
-	python scripts/train_specific.py compare_small --data $(DATA_DIR)/processed/v1_detect
-	python scripts/train_specific.py compare_medium --data $(DATA_DIR)/processed/v1_detect
-
-# Treinamento overnight - SEGMENTAÇÃO ⭐
-.PHONY: train-overnight train-overnight-detect
-
-train-overnight:
-	@echo "$(MAGENTA)🌙 Treinamento overnight SEGMENTAÇÃO (200 épocas)...$(RESET)"
-	python scripts/train_specific.py overnight_segment --data $(DATA_DIR)/processed/v1_segment
-
-train-overnight-detect:
-	@echo "$(MAGENTA)🌙 Treinamento overnight DETECÇÃO (200 épocas)...$(RESET)"
-	python scripts/train_specific.py overnight --data $(DATA_DIR)/processed/v1_detect
-
-# Configurador interativo
-.PHONY: configure
-configure:
-	@echo "$(CYAN)🎛️ Configurador interativo...$(RESET)"
-	python scripts/configure_training.py
-
-# Listar presets disponíveis
-.PHONY: list-presets
-list-presets:
-	@echo "$(BLUE)📋 Presets disponíveis:$(RESET)"
-	@python -c "from src.yolo.presets import yolo_presets; print('\\n'.join(yolo_presets.list_presets()))"
-
-
+# Treinar TODOS os modelos em todas as frações
+.PHONY: train-all-fractions
+train-all-fractions:
+	@echo "$(MAGENTA)🎯 Treinando TODOS os modelos em todas as frações...$(RESET)"
+	@echo "$(YELLOW)⚠️ Isso executará 9 treinamentos (pode levar várias horas)$(RESET)"
+	@echo ""
+	make train-fractions-nano
+	make train-fractions-small
+	make train-fractions-medium
+	@echo "$(GREEN)🎉 Todos os modelos treinados!$(RESET)"
 
 # ========================================
 # 📊 ANÁLISE
@@ -503,7 +386,7 @@ list-presets:
 
 setup-tensorboard:
 	@echo "$(CYAN)📊 Convertendo logs YOLO para TensorBoard...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/setup_tensorboard.py
+	$(PYTHON) $(SCRIPTS_DIR)/monitoring/setup_tensorboard.py
 
 tensorboard:
 	@echo "$(CYAN)📈 Iniciando TensorBoard...$(RESET)"
@@ -520,11 +403,11 @@ ifndef DATA
 	@echo "$(RED)❌ Erro: Especifique o dataset com DATA=path/to/dataset$(RESET)"
 	@exit 1
 endif
-	$(PYTHON) $(SCRIPTS_DIR)/error_analysis.py --model $(MODEL) --data $(DATA)
+	$(PYTHON) $(SCRIPTS_DIR)/evaluation/analyze_errors.py --model $(MODEL) --data $(DATA)
 
 compare-models:
 	@echo "$(CYAN)📊 Comparando modelos...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/compare_models.py --experiments-dir $(EXPERIMENTS_DIR)
+	$(PYTHON) $(SCRIPTS_DIR)/evaluation/compare_models.py --experiments-dir $(EXPERIMENTS_DIR)
 
 # Atalho para analisar o melhor modelo de segmentação
 analyze-best-model:
@@ -535,20 +418,20 @@ analyze-best-model:
 		exit 1; \
 	fi; \
 	echo "$(GREEN)Analisando: $$latest_model$(RESET)"; \
-	$(PYTHON) $(SCRIPTS_DIR)/error_analysis.py --model "$$latest_model" --data $(DATA_DIR)/processed/v1_segment
+	$(PYTHON) $(SCRIPTS_DIR)/evaluation/analyze_best_model.py --model "$$latest_model" --data $(DATA_DIR)/processed/v1_segment
 
 # Comparar apenas modelos de segmentação
 compare-segments:
 	@echo "$(CYAN)📊 Comparando modelos de SEGMENTAÇÃO...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/compare_models.py --experiments-dir $(EXPERIMENTS_DIR) --pattern "*-seg-*"
+	$(PYTHON) $(SCRIPTS_DIR)/evaluation/compare_models.py --experiments-dir $(EXPERIMENTS_DIR) --pattern "*-seg-*"
 
 # Comparar apenas modelos de detecção
 compare-detects:
 	@echo "$(CYAN)📊 Comparando modelos de DETECÇÃO...$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/compare_models.py --experiments-dir $(EXPERIMENTS_DIR) --pattern "*-detect-*"
+	$(PYTHON) $(SCRIPTS_DIR)/evaluation/compare_models.py --experiments-dir $(EXPERIMENTS_DIR) --pattern "*-detect-*"
 
 # ========================================
-# � PREDIÇÃO/INFERÊNCIA
+# 📊 PREDIÇÃO/INFERÊNCIA
 # ========================================
 
 .PHONY: predict predict-image predict-dir predict-batch predict-latest
@@ -576,7 +459,7 @@ endif
 	@echo "$(CYAN)📸 Modelo: $(MODEL)$(RESET)"
 	@echo "$(CYAN)🖼️ Imagem: $(IMAGE)$(RESET)"
 	@echo "$(CYAN)💾 Salvando em: outputs/predictions/$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/predict_yolo.py \
+	$(PYTHON) $(SCRIPTS_DIR)/inference/predict_yolo.py \
 		--model $(MODEL) \
 		--image $(IMAGE) \
 		--output-dir outputs/predictions \
@@ -603,7 +486,7 @@ endif
 	@echo "$(CYAN)📸 Modelo: $(MODEL)$(RESET)"
 	@echo "$(CYAN)📁 Diretório: $(DIR)$(RESET)"
 	@echo "$(CYAN)💾 Salvando em: outputs/predictions/$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/predict_yolo.py \
+	$(PYTHON) $(SCRIPTS_DIR)/inference/predict_yolo.py \
 		--model $(MODEL) \
 		--directory $(DIR) \
 		--output-dir outputs/predictions \
@@ -630,7 +513,7 @@ endif
 	@echo "$(CYAN)📸 Modelo: $(MODEL)$(RESET)"
 	@echo "$(CYAN)🖼️ Imagens: $(IMAGES)$(RESET)"
 	@echo "$(CYAN)💾 Salvando em: outputs/predictions/$(RESET)"
-	$(PYTHON) $(SCRIPTS_DIR)/predict_yolo.py \
+	$(PYTHON) $(SCRIPTS_DIR)/inference/predict_yolo.py \
 		--model $(MODEL) \
 		--batch $(IMAGES) \
 		--output-dir outputs/predictions \
@@ -649,7 +532,7 @@ ifndef IMAGE
 	@echo "$(YELLOW)Exemplo: make predict-latest IMAGE=test.jpg$(RESET)"
 	@exit 1
 endif
-	$(PYTHON) $(SCRIPTS_DIR)/predict_latest.py \
+	$(PYTHON) $(SCRIPTS_DIR)/inference/predict_latest.py \
 		--image "$(IMAGE)" \
 		--conf $(if $(CONF),$(CONF),0.25) \
 		--iou $(if $(IOU),$(IOU),0.7) \
@@ -669,7 +552,7 @@ ifndef IMAGE
 	@echo "$(YELLOW)Exemplo: make test-inference MODEL=experiments/yolov8s-seg_final/weights/best.pt IMAGE=test.jpg$(RESET)"
 	@exit 1
 endif
-	$(PYTHON) $(SCRIPTS_DIR)/test_inference.py \
+	$(PYTHON) $(SCRIPTS_DIR)/inference/test_inference.py \
 		--model "$(MODEL)" \
 		--image "$(IMAGE)" \
 		--conf $(if $(CONF),$(CONF),0.25) \
@@ -721,6 +604,15 @@ clean-models:
 clean-all: clean clean-data clean-models
 	@echo "$(RED)🧹 Limpeza completa realizada!$(RESET)"
 
+# Limpeza específica para experimentos de learning curves
+.PHONY: clean-learning-curves
+
+clean-learning-curves:
+	@echo "$(YELLOW)🧹 Removendo experimentos de learning curves...$(RESET)"
+	@if exist "$(EXPERIMENTS_DIR)\learning_curve_*" rmdir /s /q "$(EXPERIMENTS_DIR)\learning_curve_*"
+	@if exist "outputs\learning_curves" rmdir /s /q "outputs\learning_curves"
+	@echo "$(GREEN)✅ Experimentos de learning curves removidos!$(RESET)"
+
 # ========================================
 # 🎯 COMANDOS DE CONVENIÊNCIA
 # ========================================
@@ -757,6 +649,49 @@ full-pipeline-detect: setup quick-detect train-detect-nano train-detect-small tr
 	@echo "$(CYAN)Resultados em: $(EXPERIMENTS_DIR)$(RESET)"
 
 # ========================================
+# 📊 WORKFLOW DE LEARNING CURVES
+# ========================================
+
+# Workflow completo para análise de curvas de aprendizado
+.PHONY: workflow-learning-curves workflow-learning-curves-quick
+
+workflow-learning-curves:
+	@echo "$(MAGENTA)📊 WORKFLOW COMPLETO - ANÁLISE DE CURVAS DE APRENDIZADO$(RESET)"
+	@echo "$(CYAN)Este workflow analisa o aprendizado dos modelos com diferentes frações de dados$(RESET)"
+	@echo ""
+	@echo "$(BLUE)1/4 📊 Criando datasets fracionados (25%%, 50%%, 75%%, 100%%)...$(RESET)"
+	make process-fractions
+	@echo ""
+	@echo "$(BLUE)2/4 🤖 Treinando TODOS os modelos em todas as frações...$(RESET)"
+	@echo "$(YELLOW)⚠️  ATENÇÃO: Este processo pode levar MUITO tempo!$(RESET)"
+	make train-all-fractions
+	@echo ""
+	@echo "$(BLUE)3/4 📈 Analisando e comparando resultados...$(RESET)"
+	make compare-learning-curves
+	@echo ""
+	@echo "$(BLUE)4/4 ✅ Workflow concluído!$(RESET)"
+	@echo "$(GREEN)🎉 ANÁLISE DE CURVAS DE APRENDIZADO CONCLUÍDA!$(RESET)"
+	@echo "$(YELLOW)📊 Datasets fracionados: $(FRACTIONS_DIR)$(RESET)"
+	@echo "$(YELLOW)🤖 Experimentos: $(EXPERIMENTS_DIR)/learning_curve_*$(RESET)"
+	@echo "$(YELLOW)📈 Resultados: outputs/learning_curves/$(RESET)"
+
+# Workflow rápido (apenas nano model)
+workflow-learning-curves-quick:
+	@echo "$(MAGENTA)📊 WORKFLOW RÁPIDO - LEARNING CURVES (apenas YOLOv8n-seg)$(RESET)"
+	@echo ""
+	@echo "$(BLUE)1/3 📊 Criando datasets fracionados...$(RESET)"
+	make process-fractions
+	@echo ""
+	@echo "$(BLUE)2/3 🤖 Treinando YOLOv8n-seg em todas as frações...$(RESET)"
+	make train-fractions-nano
+	@echo ""
+	@echo "$(BLUE)3/3 📈 Analisando resultados...$(RESET)"
+	make compare-learning-curves
+	@echo ""
+	@echo "$(GREEN)🎉 ANÁLISE RÁPIDA CONCLUÍDA!$(RESET)"
+	@echo "$(YELLOW)📈 Resultados: outputs/learning_curves/$(RESET)"
+
+# ========================================
 # 📝 INFORMAÇÕES
 # ========================================
 
@@ -786,39 +721,380 @@ version:
 .PHONY: list-experiments list-completed compare-final generate-report cleanup-failed
 list-experiments:
 	@echo "$(BLUE)📊 Listando experimentos...$(RESET)"
-	python scripts/manage_experiments.py list
+	python $(SCRIPTS_DIR)/experiments/manage_experiments.py list
 
 list-completed:
 	@echo "$(GREEN)✅ Experimentos concluídos...$(RESET)"
-	python scripts/manage_experiments.py list --status completed --sort map50
+	python $(SCRIPTS_DIR)/experiments/manage_experiments.py list --status completed --sort map50
 
 compare-final:
 	@echo "$(YELLOW)📈 Comparando experimentos finais...$(RESET)"
-	python scripts/manage_experiments.py compare \
+	python $(SCRIPTS_DIR)/experiments/manage_experiments.py compare \
 		final_yolov8n_detect final_yolov8s_detect final_yolov8m_detect \
 		--output experiments/final_comparison.png
 
 generate-report:
 	@echo "$(MAGENTA)📝 Gerando relatório completo...$(RESET)"
-	python scripts/manage_experiments.py report --output experiments/relatorio_completo.md
+	python $(SCRIPTS_DIR)/experiments/manage_experiments.py report --output experiments/relatorio_completo.md
 
 cleanup-failed:
 	@echo "$(RED)🗑️ Limpando experimentos falhados...$(RESET)"
-	python scripts/manage_experiments.py cleanup --dry-run
+	python $(SCRIPTS_DIR)/experiments/manage_experiments.py cleanup --dry-run
 
-# Comandos de validação
-validate-data:
-	@echo "$(CYAN)🔍 Validando datasets processados...$(RESET)"
-	@python -c "from src.data.validators import validate_dataset; \
-		import sys; \
-		result1 = validate_dataset('$(DATA_DIR)/processed/v1_segment'); \
-		result2 = validate_dataset('$(DATA_DIR)/processed/v1_detect'); \
-		print('✅ Segmentação:' if result1 else '❌ Segmentação:', result1); \
-		print('✅ Detecção:' if result2 else '❌ Detecção:', result2)"
 
-test-gpu:
-	@echo "$(BLUE)🖥️ Testando GPU...$(RESET)"
-	python scripts/test_cuda.py
+# ========================================
+# 🔤 OCR (Optical Character Recognition)
+# ========================================
+
+.PHONY: ocr-setup ocr-prepare-data ocr-test ocr-compare ocr-benchmark
+.PHONY: ocr-trocr ocr-trocr-quick ocr-trocr-benchmark ocr-trocr-validate-brightness
+.PHONY: prep-test prep-compare pipeline-test pipeline-run
+.PHONY: exp-ocr-comparison viz-ocr-results viz-preprocessing
+.PHONY: ocr-test-stats
+
+# Teste do Sistema de Estatísticas
+ocr-test-stats:
+	@echo "$(BLUE)🧪 Testando sistema de estatísticas OCR...$(RESET)"
+	@echo "$(YELLOW)Gerando dados mock e visualizações...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/utils/test_ocr_statistics.py
+	@echo "$(GREEN)✅ Teste concluído!$(RESET)"
+	@echo "$(CYAN)💡 Ver resultados em: outputs/test_statistics/report.html$(RESET)"
+
+# Setup e Instalação
+ocr-setup:
+	@echo "$(BLUE)🔧 Instalando engines OCR...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/setup/install_ocr_engines.py
+	@echo "$(GREEN)✅ OCRs instalados!$(RESET)"
+
+# Teste rápido do módulo
+ocr-test-module:
+	@echo "$(BLUE)🧪 Testando módulo OCR...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/test_ocr_module.py
+
+# Preparação de Dados
+ocr-prepare-data:
+	@echo "$(BLUE)📦 Preparando dataset OCR...$(RESET)"
+ifndef DATASET
+	@echo "$(YELLOW)💡 Usando dataset padrão: data/raw/TCC_DATESET_V2-2$(RESET)"
+	$(eval DATASET := data/raw/TCC_DATESET_V2-2)
+endif
+	@if not exist "$(DATASET)" ( \
+		echo "$(RED)❌ Dataset não encontrado: $(DATASET)$(RESET)" && \
+		echo "$(YELLOW)💡 Certifique-se que o dataset está baixado$(RESET)" && \
+		exit 1 \
+	)
+	$(PYTHON) $(SCRIPTS_DIR)/data/prepare_ocr_dataset.py \
+		--dataset $(DATASET) \
+		--output $(DATA_DIR)/ocr_test \
+		--max-samples 50 \
+		--padding 10 \
+		$(if $(MASK),--use-mask,) \
+		$(if $(MASK_STRATEGY),--mask-strategy $(MASK_STRATEGY),)
+	@echo "$(GREEN)✅ Dataset OCR preparado em $(DATA_DIR)/ocr_test$(RESET)"
+	@echo "$(CYAN)💡 Use MASK=1 para aplicar máscaras de segmentação$(RESET)"
+	@echo "$(CYAN)💡 Use MASK_STRATEGY=white/black/blur para ajustar background$(RESET)"
+
+# Anotação de Ground Truth
+ocr-annotate:
+	@echo "$(BLUE)📝 Iniciando anotação de ground truth...$(RESET)"
+	@if not exist "$(DATA_DIR)\ocr_test\images" ( \
+		echo "$(RED)❌ Dataset OCR não encontrado!$(RESET)" && \
+		echo "$(YELLOW)💡 Execute primeiro: make ocr-prepare-data$(RESET)" && \
+		exit 1 \
+	)
+	$(PYTHON) $(SCRIPTS_DIR)/data/annotate_ground_truth.py \
+		--data-dir $(DATA_DIR)/ocr_test
+	@echo "$(GREEN)✅ Anotação concluída!$(RESET)"
+
+# Teste Individual de Engine
+ocr-test:
+ifndef ENGINE
+	@echo "$(RED)❌ Especifique: make ocr-test ENGINE=paddleocr$(RESET)"
+	@echo "$(YELLOW)Engines disponíveis: tesseract, easyocr, paddleocr, trocr, parseq$(RESET)"
+	@exit 1
+endif
+	@echo "$(BLUE)🧪 Testando $(ENGINE)...$(RESET)"
+	$(PYTHON) -m src.ocr.evaluator \
+		--engine $(ENGINE) \
+		--config $(CONFIG_DIR)/ocr/$(ENGINE).yaml \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/ocr_benchmarks/$(ENGINE) \
+		$(if $(PREP),--preprocessing $(PREP),)
+	@echo "$(GREEN)✅ Teste do $(ENGINE) concluído!$(RESET)"
+	@echo ""
+	@echo "$(CYAN)� RESULTADOS GERADOS:$(RESET)"
+	@echo "$(CYAN)  📄 HTML Report: outputs/ocr_benchmarks/$(ENGINE)/report.html$(RESET)"
+	@echo "$(CYAN)  📝 Markdown Report: outputs/ocr_benchmarks/$(ENGINE)/report.md$(RESET)"
+	@echo "$(CYAN)  📈 Estatísticas JSON: outputs/ocr_benchmarks/$(ENGINE)/statistics.json$(RESET)"
+	@echo "$(CYAN)  📊 Visualizações: outputs/ocr_benchmarks/$(ENGINE)/*.png$(RESET)"
+	@echo ""
+	@echo "$(MAGENTA)💡 Gráficos gerados:$(RESET)"
+	@echo "   - overview.png - Visão geral de todas as métricas"
+	@echo "   - error_distribution.png - Análise de distribuição de erros"
+	@echo "   - confidence_analysis.png - Confiança vs acurácia"
+	@echo "   - length_analysis.png - Impacto do comprimento do texto"
+	@echo "   - time_analysis.png - Análise de tempo de processamento"
+	@echo "   - character_confusion.png - Matriz de confusão de caracteres"
+	@echo "   - performance_summary.png - Dashboard de performance"
+	@echo "   - error_examples.png - Exemplos de casos com alto erro"
+	@echo ""
+	@echo "$(CYAN)💡 Cada OCR usa seu pré-processamento otimizado automaticamente$(RESET)"
+	@echo "$(CYAN)💡 Use PREP=ppro-none para desabilitar ou PREP=ppro-{engine} para especificar$(RESET)"
+
+# Comparação de Todos os Engines
+ocr-compare:
+	@echo "$(MAGENTA)📊 Comparando OCRs...$(RESET)"
+	@if not exist "$(DATA_DIR)\ocr_test\ground_truth.json" ( \
+		echo "$(RED)❌ Ground truth não encontrado!$(RESET)" && \
+		echo "$(YELLOW)💡 Anote o ground truth em $(DATA_DIR)/ocr_test/ground_truth.json$(RESET)" && \
+		exit 1 \
+	)
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/benchmark_ocrs.py \
+		--config $(CONFIG_DIR)/experiments/ocr_comparison.yaml \
+		--output outputs/ocr_benchmarks/comparison \
+		$(if $(PREP),--preprocessing $(PREP),) \
+		$(if $(ENGINE),--engine $(ENGINE))
+	@echo "$(GREEN)✅ Comparação concluída!$(RESET)"
+	@echo "$(CYAN)📊 Resultados: outputs/ocr_benchmarks/comparison/$(RESET)"
+	@echo "$(CYAN)💡 Cada OCR usa seu pré-processamento otimizado: ppro-{engine}$(RESET)"
+	@echo "$(CYAN)💡 Configs disponíveis: ppro-none, ppro-tesseract, ppro-easyocr, ppro-paddleocr, ppro-trocr, ppro-parseq$(RESET)"
+	@echo "$(CYAN)💡 Use PREP=ppro-none para baseline sem pré-processamento$(RESET)"
+
+# Benchmark Completo (todos os engines)
+ocr-benchmark:
+	@echo "$(MAGENTA)🏆 Benchmark completo de OCRs...$(RESET)"
+	@echo "$(YELLOW)⚠️  Isso pode levar alguns minutos...$(RESET)"
+	@echo ""
+	@make ocr-test ENGINE=tesseract
+	@make ocr-test ENGINE=easyocr
+	@make ocr-test ENGINE=paddleocr
+	@make ocr-test ENGINE=trocr
+	@make ocr-test ENGINE=parseq
+	@make ocr-compare
+	@echo "$(GREEN)🎉 Benchmark completo!$(RESET)"
+
+# =============================================================================
+# 🤖 TrOCR - Transformer OCR com Normalização de Brilho
+# =============================================================================
+# Comandos para testar TrOCR (microsoft/trocr-base-printed)
+# ✅ Integrado com normalização de brilho, CLAHE e remoção de sombras
+
+.PHONY: ocr-trocr ocr-trocr-quick ocr-trocr-benchmark
+
+# Teste padrão do TrOCR (com normalização de brilho)
+ocr-trocr:
+	@echo "$(BLUE)🤖 Testando TrOCR (microsoft/trocr-base-printed)...$(RESET)"
+	@echo "$(CYAN)✨ Normalização de brilho: ATIVADA$(RESET)"
+	@make ocr-test ENGINE=trocr
+	@echo "$(GREEN)✅ TrOCR testado com sucesso!$(RESET)"
+	@echo "$(CYAN)💡 Config: config/ocr/trocr.yaml$(RESET)"
+	@echo "$(CYAN)📊 Relatório: outputs/ocr_benchmarks/trocr/report.html$(RESET)"
+
+# Teste rápido do TrOCR (apenas primeiras 10 imagens)
+ocr-trocr-quick:
+	@echo "$(BLUE)⚡ Teste rápido TrOCR...$(RESET)"
+	@echo "$(CYAN)✨ Normalização de brilho: ATIVADA$(RESET)"
+	@echo "$(YELLOW)💡 Dica: Para teste completo use 'make ocr-trocr'$(RESET)"
+	@make ocr-test ENGINE=trocr
+	@echo "$(GREEN)✅ Teste rápido concluído!$(RESET)"
+	@echo "$(CYAN)📊 Relatório: outputs/ocr_benchmarks/trocr/report.html$(RESET)"
+
+# Benchmark completo do TrOCR (alias para ocr-trocr)
+ocr-trocr-benchmark:
+	@echo "$(MAGENTA)🏆 Benchmark completo do TrOCR...$(RESET)"
+	@make ocr-trocr
+	@echo ""
+	@echo "$(GREEN)🎉 Benchmark TrOCR concluído!$(RESET)"
+	@echo "$(CYAN)📊 Métricas disponíveis:$(RESET)"
+	@echo "   - Accuracy (taxa de acerto exata)"
+	@echo "   - CER (Character Error Rate)"
+	@echo "   - WER (Word Error Rate)"
+	@echo "   - Tempo de processamento"
+	@echo ""
+	@echo "$(CYAN)💡 Compare com outros engines: make ocr-benchmark$(RESET)"
+
+# Validar normalização de brilho do TrOCR
+.PHONY: ocr-trocr-validate-brightness
+
+ocr-trocr-validate-brightness:
+	@echo "$(BLUE)🔆 Validando normalização de brilho do TrOCR...$(RESET)"
+	@echo "$(CYAN)Este teste valida:$(RESET)"
+	@echo "   - Imagens muito brilhantes (brightness > 200)"
+	@echo "   - Imagens muito escuras (brightness < 80)"
+	@echo "   - Imagens com brilho adequado"
+	@echo ""
+	$(PYTHON) scripts/ocr/test_trocr_brightness.py
+	@echo ""
+	@echo "$(GREEN)✅ Validação concluída!$(RESET)"
+	@echo "$(CYAN)📊 Resultados: outputs/trocr_brightness_test/$(RESET)"
+
+# Validação completa do PARSeq
+.PHONY: ocr-parseq-validate
+
+ocr-parseq-validate:
+	@echo "$(BLUE)🔍 Validando implementação do PARSeq TINE...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/validate_parseq.py
+	@echo "$(GREEN)✅ Validação concluída!$(RESET)"
+
+# Comparar OCR com diferentes configurações de pré-processamento
+.PHONY: ocr-compare-preprocessing
+
+ocr-compare-preprocessing:
+	@echo "$(MAGENTA)📊 Comparando OCRs com diferentes configurações de pré-processamento...$(RESET)"
+	@echo ""
+	@echo "$(BLUE)1/6 🔍 Testando SEM pré-processamento (baseline)...$(RESET)"
+	@make ocr-compare PREP=ppro-none
+	@move outputs\ocr_benchmarks\comparison outputs\ocr_benchmarks\comparison_ppro-none
+	@echo ""
+	@echo "$(BLUE)2/6 🔍 Testando pré-processamento TESSERACT...$(RESET)"
+	@make ocr-compare PREP=ppro-tesseract
+	@move outputs\ocr_benchmarks\comparison outputs\ocr_benchmarks\comparison_ppro-tesseract
+	@echo ""
+	@echo "$(BLUE)3/6 🔍 Testando pré-processamento EASYOCR...$(RESET)"
+	@make ocr-compare PREP=ppro-easyocr
+	@move outputs\ocr_benchmarks\comparison outputs\ocr_benchmarks\comparison_ppro-easyocr
+	@echo ""
+	@echo "$(BLUE)4/6 🔍 Testando pré-processamento PADDLEOCR...$(RESET)"
+	@make ocr-compare PREP=ppro-paddleocr
+	@move outputs\ocr_benchmarks\comparison outputs\ocr_benchmarks\comparison_ppro-paddleocr
+	@echo ""
+	@echo "$(BLUE)5/6 🔍 Testando pré-processamento TROCR...$(RESET)"
+	@make ocr-compare PREP=ppro-trocr
+	@move outputs\ocr_benchmarks\comparison outputs\ocr_benchmarks\comparison_ppro-trocr
+	@echo ""
+	@echo "$(BLUE)6/6 🔍 Testando pré-processamento PARSEQ...$(RESET)"
+	@make ocr-compare PREP=ppro-parseq
+	@move outputs\ocr_benchmarks\comparison outputs\ocr_benchmarks\comparison_ppro-parseq
+	@echo ""
+	@echo "$(GREEN)🎉 Comparação completa de pré-processamento concluída!$(RESET)"
+	@echo "$(CYAN)📊 Resultados em: outputs/ocr_benchmarks/$(RESET)"
+	@echo "   - comparison_ppro-none/       (sem pré-processamento - baseline)"
+	@echo "   - comparison_ppro-tesseract/  (otimizado para Tesseract)"
+	@echo "   - comparison_ppro-easyocr/    (otimizado para EasyOCR)"
+	@echo "   - comparison_ppro-paddleocr/  (otimizado para PaddleOCR)"
+	@echo "   - comparison_ppro-trocr/      (otimizado para TrOCR)"
+	@echo "   - comparison_ppro-parseq/     (otimizado para PARSeq TINE)"
+
+# Teste de Pré-processamento
+prep-test:
+ifndef CONFIG
+	@echo "$(RED)❌ Especifique: make prep-test CONFIG=ppro-paddleocr$(RESET)"
+	@echo "$(YELLOW)Configs disponíveis: ppro-none, ppro-tesseract, ppro-easyocr, ppro-paddleocr, ppro-trocr, ppro-parseq$(RESET)"
+	@exit 1
+endif
+	@echo "$(BLUE)🔍 Testando preprocessing $(CONFIG)...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/test_preprocessing.py \
+		--config $(CONFIG_DIR)/preprocessing/$(CONFIG).yaml \
+		--test-data $(DATA_DIR)/ocr_test \
+		--visualize \
+		--max-samples 10
+	@echo "$(GREEN)✅ Teste de preprocessing concluído!$(RESET)"
+	@echo "$(CYAN)📊 Resultados: outputs/preprocessing_tests/$(CONFIG)/$(RESET)"
+
+# Comparação de Configurações de Pré-processamento
+prep-compare:
+	@echo "$(MAGENTA)📊 Comparando configurações de preprocessing...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/test_preprocessing.py \
+		--compare-all \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/preprocessing_tests \
+		--visualize \
+		--max-samples 10
+	@echo "$(GREEN)✅ Comparação de preprocessing concluída!$(RESET)"
+	@echo "$(CYAN)📊 Resultados: outputs/preprocessing_tests/$(RESET)"
+	@echo "$(CYAN)💡 Comparação inclui: ppro-none, ppro-tesseract, ppro-easyocr, ppro-paddleocr, ppro-trocr$(RESET)"
+
+# Demonstração interativa de Pré-processamento (Novas funcionalidades)
+prep-demo:
+	@echo "$(MAGENTA)🎨 Demonstração de Pré-processamento...$(RESET)"
+	@echo "$(CYAN)💡 Demonstra normalize_colors e sharpen em ação$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/demo_preprocessing.py
+	@echo "$(GREEN)✅ Demonstração concluída!$(RESET)"
+	@echo "$(CYAN)📊 Resultados salvos em: outputs/preprocessing_demo/$(RESET)"
+
+# Pipeline Completo (YOLO + OCR + Parse)
+pipeline-test:
+	@echo "$(MAGENTA)🚀 Testando pipeline completo...$(RESET)"
+	$(PYTHON) -m src.pipeline.expiry_date \
+		--config $(CONFIG_DIR)/pipeline/full_pipeline.yaml \
+		--test-data $(DATA_DIR)/test_images \
+		--output outputs/pipeline_test
+	@echo "$(GREEN)✅ Pipeline testado!$(RESET)"
+
+# Executar Pipeline em Imagem
+pipeline-run:
+ifndef IMAGE
+	@echo "$(RED)❌ Especifique: make pipeline-run IMAGE=test.jpg$(RESET)"
+	@exit 1
+endif
+	@echo "$(BLUE)🔍 Processando $(IMAGE)...$(RESET)"
+	$(PYTHON) -m src.pipeline.expiry_date \
+		--config $(CONFIG_DIR)/pipeline/full_pipeline.yaml \
+		--image "$(IMAGE)" \
+		--visualize \
+		--save-output
+	@echo "$(GREEN)✅ Pipeline executado!$(RESET)"
+
+# Experimento: Comparação Completa de OCR
+exp-ocr-comparison:
+	@echo "$(MAGENTA)📊 Rodando experimento: Comparação OCR...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/experiments/run_ocr_comparison.py \
+		--config $(CONFIG_DIR)/experiments/ocr_comparison.yaml
+	@echo "$(GREEN)🎉 Experimento concluído!$(RESET)"
+
+# Visualização de Resultados OCR
+viz-ocr-results:
+	@echo "$(BLUE)📈 Gerando visualizações OCR...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/visualize_results.py \
+		--results outputs/ocr_benchmarks/comparison/comparison_summary.csv \
+		--output outputs/visualizations/ocr_comparison.png \
+		--type ocr
+	@echo "$(GREEN)✅ Visualização gerada: outputs/visualizations/ocr_comparison.png$(RESET)"
+
+# Visualização de Resultados de Pré-processamento
+viz-preprocessing:
+	@echo "$(BLUE)📈 Gerando visualizações preprocessing...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/visualize_results.py \
+		--results outputs/preprocessing_tests/results.csv \
+		--output outputs/visualizations/preprocessing_comparison.png \
+		--type preprocessing
+	@echo "$(GREEN)✅ Visualização gerada: outputs/visualizations/preprocessing_comparison.png$(RESET)"
+
+# Workflow Completo OCR (para TCC)
+workflow-ocr:
+	@echo "$(MAGENTA)🎓 WORKFLOW COMPLETO OCR$(RESET)"
+	@echo "$(CYAN)Este comando executará todo o fluxo de OCR automaticamente$(RESET)"
+	@echo ""
+	@echo "$(BLUE)1/5 🔧 Instalando engines...$(RESET)"
+	@make ocr-setup
+	@echo ""
+	@echo "$(BLUE)2/5 📦 Preparando dataset...$(RESET)"
+	@make ocr-prepare-data
+	@echo ""
+	@echo "$(BLUE)3/5 🧪 Executando benchmark...$(RESET)"
+	@make ocr-compare
+	@echo ""
+	@echo "$(BLUE)4/5 🔍 Testando preprocessing...$(RESET)"
+	@make prep-compare
+	@echo ""
+	@echo "$(BLUE)5/5 📊 Gerando visualizações...$(RESET)"
+	@make viz-ocr-results
+	@make viz-preprocessing
+	@echo ""
+	@echo "$(GREEN)🎉 WORKFLOW OCR CONCLUÍDO!$(RESET)"
+	@echo "$(YELLOW)📊 Resultados em: outputs/ocr_benchmarks/ e outputs/preprocessing_tests/$(RESET)"
+	@echo "$(YELLOW)📈 Visualizações em: outputs/visualizations/$(RESET)"
+
+# Limpeza de Dados OCR
+clean-ocr:
+	@echo "$(RED)🧹 Limpando dados OCR...$(RESET)"
+	@if exist "$(DATA_DIR)\ocr_test" rmdir /s /q "$(DATA_DIR)\ocr_test"
+	@if exist "outputs\ocr_benchmarks" rmdir /s /q "outputs\ocr_benchmarks"
+	@if exist "outputs\preprocessing_tests" rmdir /s /q "outputs\preprocessing_tests"
+	@echo "$(GREEN)✅ Dados OCR limpos!$(RESET)"
+
+
+
 
 # Workflow completo para TCC - SEGMENTAÇÃO ⭐
 workflow-tcc:
@@ -869,57 +1145,472 @@ endif
 	make generate-report
 	@echo "$(GREEN)🎉 WORKFLOW TCC DETECÇÃO CONCLUÍDO!$(RESET)"
 
+# =============================================================================
+# 🚀 ENHANCED PARSeq - Pipeline Robusto com Multi-linha, Ensemble e Reranking
+# =============================================================================
+# Pipeline completo com:
+# - Line detection (detecção e separação de linhas)
+# - Geometric normalization (deskew, perspective)
+# - Photometric normalization (CLAHE, denoise, shadow removal)
+# - Ensemble de variantes (múltiplas alturas, CLAHE, denoise)
+# - Reranking inteligente (confidence, dict match, consensus)
+# - Contextual postprocessing (ambiguity mapping, format fixing)
+
+.PHONY: ocr-enhanced ocr-enhanced-demo ocr-enhanced-batch ocr-enhanced-ablation
+.PHONY: ocr-enhanced-fast ocr-enhanced-quality ocr-enhanced-experiment
+.PHONY: ocr-enhanced-finetune ocr-enhanced-finetune-prepare ocr-enhanced-eval
+
 # ========================================
-# 📝 EXEMPLOS DE USO - PREDIÇÃO
+# 1. DEMO & QUICK TESTS
 # ========================================
 
-.PHONY: help-predict example-predict
-help-predict:
-	@echo "$(CYAN)🔮 EXEMPLOS DE USO - PREDIÇÃO$(RESET)"
-	@echo "$(CYAN)======================================$(RESET)"
-	@echo ""
-	@echo "$(GREEN)1. Predição em uma imagem:$(RESET)"
-	@echo "   make predict-image MODEL=experiments/yolov8s-seg_final/weights/best.pt IMAGE=test.jpg"
-	@echo ""
-	@echo "$(GREEN)2. Com threshold customizado:$(RESET)"
-	@echo "   make predict-image MODEL=best.pt IMAGE=test.jpg CONF=0.5 IOU=0.8"
-	@echo ""
-	@echo "$(GREEN)3. Predição em diretório:$(RESET)"
-	@echo "   make predict-dir MODEL=best.pt DIR=data/test/"
-	@echo ""
-	@echo "$(GREEN)4. Predição em lote:$(RESET)"
-	@echo "   make predict-batch MODEL=best.pt IMAGES='img1.jpg img2.jpg img3.jpg'"
-	@echo ""
-	@echo "$(GREEN)5. Predição com último modelo treinado (automático):$(RESET)"
-	@echo "   make predict-latest IMAGE=test.jpg"
-	@echo ""
-	@echo "$(YELLOW)💡 OPÇÕES ADICIONAIS:$(RESET)"
-	@echo "   CONF=0.5        # Threshold de confidence (padrão: 0.25)"
-	@echo "   IOU=0.8         # Threshold de IoU NMS (padrão: 0.7)"
-	@echo ""
-	@echo "$(YELLOW)📁 RESULTADOS SALVOS EM:$(RESET)"
-	@echo "   outputs/predictions/images/     # Imagens com predições"
-	@echo "   outputs/predictions/json/       # Resultados em JSON"
-	@echo "   outputs/predictions/crops/      # Crops das detecções"
-	@echo "   outputs/predictions/summary.json # Resumo geral"
+# Demo interativo do Enhanced PARSeq
+ocr-enhanced-demo:
+	@echo "$(MAGENTA)🚀 Enhanced PARSeq - Demo Interativo$(RESET)"
+	@echo "$(CYAN)Pipeline: Line Detection → Normalization → Ensemble → Reranking → Postprocessing$(RESET)"
+ifndef IMAGE
+	@echo "$(YELLOW)⚠️ Usando imagem de teste padrão...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/demo_enhanced_parseq.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced.yaml \
+		--mode demo
+else
+	@echo "$(GREEN)📷 Processando: $(IMAGE)$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/demo_enhanced_parseq.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced.yaml \
+		--image "$(IMAGE)" \
+		--mode demo \
+		--visualize
+endif
+	@echo "$(GREEN)✅ Demo concluído!$(RESET)"
+	@echo "$(CYAN)📊 Resultados salvos em: outputs/enhanced_parseq/demo/$(RESET)"
 
-# Exemplo prático de predição (para testes rápidos)
-example-predict:
-	@echo "$(MAGENTA)🔮 EXEMPLO: Testando predição...$(RESET)"
-	@echo "$(CYAN)Este exemplo usa o último modelo treinado$(RESET)"
+# Teste simples com configuração balanceada (padrão)
+ocr-enhanced:
+	@echo "$(BLUE)🔤 Testando Enhanced PARSeq (modo balanceado)...$(RESET)"
+	$(PYTHON) -m src.ocr.evaluator \
+		--engine parseq_enhanced \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced.yaml \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/ocr_benchmarks/parseq_enhanced
+	@echo "$(GREEN)✅ Enhanced PARSeq testado com sucesso!$(RESET)"
 	@echo ""
-	@latest_model=$$(ls -t $(EXPERIMENTS_DIR)/*/weights/best.pt 2>/dev/null | head -1); \
-	if [ -z "$$latest_model" ]; then \
-		echo "$(RED)❌ Nenhum modelo encontrado!$(RESET)"; \
-		echo "$(YELLOW)💡 Primeiro treine um modelo com: make train-quick$(RESET)"; \
-		exit 1; \
-	fi; \
-	echo "$(GREEN)✓ Modelo encontrado: $$latest_model$(RESET)"; \
-	echo ""; \
-	echo "$(YELLOW)💡 Para testar, execute:$(RESET)"; \
-	echo ""; \
-	echo "   make predict-image MODEL=\"$$latest_model\" IMAGE=SUA_IMAGEM.jpg"; \
-	echo ""; \
-	echo "$(CYAN)ou use o atalho:$(RESET)"; \
-	echo ""; \
-	echo "   make predict-latest IMAGE=SUA_IMAGEM.jpg";
+	@echo "$(CYAN)📊 RESULTADOS DETALHADOS GERADOS:$(RESET)"
+	@echo "$(CYAN)  📄 HTML Report: outputs/ocr_benchmarks/parseq_enhanced/report.html$(RESET)"
+	@echo "$(CYAN)  📝 Markdown Report: outputs/ocr_benchmarks/parseq_enhanced/report.md$(RESET)"
+	@echo "$(CYAN)  📈 Estatísticas JSON: outputs/ocr_benchmarks/parseq_enhanced/statistics.json$(RESET)"
+	@echo "$(CYAN)  📊 Visualizações: outputs/ocr_benchmarks/parseq_enhanced/*.png$(RESET)"
+	@echo ""
+	@echo "$(MAGENTA)💡 Análises avançadas incluídas:$(RESET)"
+	@echo "   ✅ Estatísticas básicas (exact match, CER, confidence)"
+	@echo "   📊 Análise de erros por categoria (perfect, low, medium, high)"
+	@echo "   🔤 Matriz de confusão de caracteres"
+	@echo "   📝 Análise em nível de palavras"
+	@echo "   📏 Impacto do comprimento do texto"
+	@echo "   ⏱️  Análise de desempenho e tempo"
+	@echo "   📈 Correlação confiança vs precisão"
+	@echo "   🎯 Dashboard de performance completo"
+
+# Teste rápido (sem ensemble, para velocidade)
+ocr-enhanced-fast:
+	@echo "$(BLUE)⚡ Enhanced PARSeq - Modo Rápido$(RESET)"
+	@echo "$(YELLOW)⚠️ Ensemble desabilitado para maior velocidade$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/demo_enhanced_parseq.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced.yaml \
+		--preset fast \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/ocr_benchmarks/parseq_enhanced_fast
+	@echo "$(GREEN)✅ Teste rápido concluído!$(RESET)"
+
+# Teste com máxima qualidade (ensemble completo, modelo large)
+ocr-enhanced-quality:
+	@echo "$(BLUE)🏆 Enhanced PARSeq - Modo Alta Qualidade$(RESET)"
+	@echo "$(CYAN)Configuração: modelo LARGE + 5 variantes + reranking$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/demo_enhanced_parseq.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced_full.yaml \
+		--preset high_quality \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/ocr_benchmarks/parseq_enhanced_quality
+	@echo "$(GREEN)✅ Teste de qualidade concluído!$(RESET)"
+	@echo "$(YELLOW)⚠️ Modo lento, mas máxima precisão$(RESET)"
+
+# ========================================
+# 2. BATCH PROCESSING
+# ========================================
+
+# Processar diretório completo
+ocr-enhanced-batch:
+ifndef DIR
+	@echo "$(RED)❌ Especifique: make ocr-enhanced-batch DIR=caminho/do/diretorio$(RESET)"
+	@echo "$(YELLOW)Exemplo: make ocr-enhanced-batch DIR=data/ocr_test$(RESET)"
+	@exit 1
+endif
+	@echo "$(BLUE)📦 Enhanced PARSeq - Processamento em Lote$(RESET)"
+	@echo "$(CYAN)Diretório: $(DIR)$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/demo_enhanced_parseq.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced.yaml \
+		--mode batch \
+		--input-dir "$(DIR)" \
+		--output outputs/enhanced_parseq/batch \
+		--visualize \
+		
+		--save-metrics
+	@echo "$(GREEN)✅ Processamento em lote concluído!$(RESET)"
+	@echo "$(CYAN)📊 Resultados: outputs/enhanced_parseq/batch/$(RESET)"
+
+# ========================================
+# 3. ABLATION STUDY
+# ========================================
+
+# Estudo de ablação completo
+ocr-enhanced-ablation:
+	@echo "$(MAGENTA)🔬 Enhanced PARSeq - Estudo de Ablação$(RESET)"
+	@echo "$(CYAN)Testando todas as combinações de componentes...$(RESET)"
+	@echo ""
+	@echo "$(YELLOW)Componentes:$(RESET)"
+	@echo "  1️⃣ Line Detection"
+	@echo "  2️⃣ Geometric Normalization"
+	@echo "  3️⃣ Photometric Normalization"
+	@echo "  4️⃣ Ensemble + Reranking"
+	@echo "  5️⃣ Contextual Postprocessing"
+	@echo ""
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/demo_enhanced_parseq.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced.yaml \
+		--mode ablation \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/enhanced_parseq/ablation
+	@echo ""
+	@echo "$(GREEN)✅ Ablation study concluído!$(RESET)"
+	@echo "$(CYAN)📊 Resultados detalhados: outputs/enhanced_parseq/ablation/$(RESET)"
+	@echo "$(CYAN)📈 Gráfico de ablação: outputs/enhanced_parseq/ablation/ablation_results.png$(RESET)"
+
+# Ablação rápida (subset de combinações)
+ocr-enhanced-ablation-quick:
+:
+	@echo "$(BLUE)🔬 Enhanced PARSeq - Ablação Rápida$(RESET)"
+	@echo "$(YELLOW)Testando combinações principais...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/run_ablation.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced.yaml \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/enhanced_parseq/ablation_quick \
+		--quick-mode
+	
+	@echo "$(GREEN)✅ Ablação rápida concluída!$(RESET)"
+
+# ========================================
+# 4. EXPERIMENTOS COMPARATIVOS
+# ========================================
+
+# Comparar Enhanced vs Baseline
+ocr-enhanced-vs-baseline:
+	@echo "$(MAGENTA)📊 Comparando Enhanced PARSeq vs Baseline$(RESET)"
+	@echo ""
+	@echo "$(BLUE)1/2 Rodando Baseline (PARSeq simples)...$(RESET)"
+	@make ocr-parseq-base
+	@echo ""
+	@echo "$(BLUE)2/2 Rodando Enhanced PARSeq...$(RESET)"
+	@make ocr-enhanced
+	@echo ""
+	@echo "$(CYAN)📊 Gerando comparação...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/compare_enhanced_vs_baseline.py \
+		--baseline outputs/ocr_benchmarks/parseq_base \
+		--enhanced outputs/ocr_benchmarks/parseq_enhanced \
+		--output outputs/enhanced_parseq/comparison
+	@echo "$(GREEN)✅ Comparação concluída!$(RESET)"
+	@echo "$(CYAN)📈 Gráficos: outputs/enhanced_parseq/comparison/$(RESET)"
+
+# Experimento completo (todos os presets)
+ocr-enhanced-experiment:
+	@echo "$(MAGENTA)🧪 Enhanced PARSeq - Experimento Completo$(RESET)"
+	@echo "$(CYAN)Testando todos os presets: fast, balanced, high_quality$(RESET)"
+	@echo ""
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/run_experiment.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced_full.yaml \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/enhanced_parseq/experiments \
+		--presets fast balanced high_quality \
+		--compare-all
+	@echo ""
+	@echo "$(GREEN)✅ Experimento completo concluído!$(RESET)"
+	@echo "$(CYAN)📊 Resultados: outputs/enhanced_parseq/experiments/$(RESET)"
+
+# ========================================
+# 5. FINE-TUNING
+# ========================================
+
+# Preparar dados para fine-tuning
+ocr-enhanced-finetune-prepare:
+	@echo "$(BLUE)📦 Preparando dados para fine-tuning...$(RESET)"
+ifndef TRAIN_DIR
+	@echo "$(RED)❌ Especifique: make ocr-enhanced-finetune-prepare TRAIN_DIR=caminho VAL_DIR=caminho$(RESET)"
+	@echo "$(YELLOW)Exemplo: make ocr-enhanced-finetune-prepare TRAIN_DIR=data/ocr_train VAL_DIR=data/ocr_val$(RESET)"
+	@exit 1
+endif
+ifndef VAL_DIR
+	@echo "$(RED)❌ Especifique VAL_DIR=caminho$(RESET)"
+	@exit 1
+endif
+	@echo "$(CYAN)Train: $(TRAIN_DIR)$(RESET)"
+	@echo "$(CYAN)Val: $(VAL_DIR)$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/prepare_finetune_data.py \
+		--train-dir "$(TRAIN_DIR)" \
+		--val-dir "$(VAL_DIR)" \
+		--output data/ocr_finetuning \
+		--format json \
+		--validate
+	@echo "$(GREEN)✅ Dados preparados!$(RESET)"
+	@echo "$(CYAN)📂 Saída: data/ocr_finetuning/$(RESET)"
+
+# Fine-tuning do modelo
+ocr-enhanced-finetune:
+	@echo "$(MAGENTA)🎓 Fine-tuning Enhanced PARSeq$(RESET)"
+	@echo "$(CYAN)Configuração: config/ocr/parseq_enhanced_full.yaml$(RESET)"
+ifndef TRAIN_DATA
+	@echo "$(YELLOW)⚠️ Usando dataset padrão: data/ocr_finetuning$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/finetune_parseq.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced_full.yaml \
+		--train-data data/ocr_finetuning/train \
+		--val-data data/ocr_finetuning/val \
+		--output models/parseq_finetuned \
+		--epochs 50 \
+		--batch-size 32 \
+		--learning-rate 1e-4
+else
+	@echo "$(CYAN)Train data: $(TRAIN_DATA)$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/finetune_parseq.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced_full.yaml \
+		--train-data "$(TRAIN_DATA)" \
+		--val-data "$(VAL_DATA)" \
+		--output models/parseq_finetuned \
+		--epochs 50 \
+		--batch-size 32 \
+		--learning-rate 1e-4
+endif
+	@echo "$(GREEN)✅ Fine-tuning concluído!$(RESET)"
+	@echo "$(CYAN)📂 Modelo: models/parseq_finetuned/$(RESET)"
+
+# Fine-tuning rápido (teste)
+ocr-enhanced-finetune-test:
+	@echo "$(BLUE)🧪 Fine-tuning de Teste (10 épocas)$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/finetune_parseq.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced_full.yaml \
+		--train-data data/ocr_finetuning/train \
+		--val-data data/ocr_finetuning/val \
+		--output models/parseq_finetuned_test \
+		--epochs 10 \
+		--batch-size 16 \
+		--learning-rate 1e-4
+	@echo "$(GREEN)✅ Teste de fine-tuning concluído!$(RESET)"
+
+# ========================================
+# 6. EVALUATION & METRICS
+# ========================================
+
+# Avaliar modelo fine-tuned
+ocr-enhanced-eval:
+ifndef MODEL
+	@echo "$(RED)❌ Especifique: make ocr-enhanced-eval MODEL=caminho/do/modelo$(RESET)"
+	@echo "$(YELLOW)Exemplo: make ocr-enhanced-eval MODEL=models/parseq_finetuned/best.pt$(RESET)"
+	@exit 1
+endif
+	@echo "$(BLUE)📊 Avaliando modelo fine-tuned...$(RESET)"
+	@echo "$(CYAN)Modelo: $(MODEL)$(RESET)"
+	$(PYTHON) -m src.ocr.evaluator \
+		--engine parseq_enhanced \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced.yaml \
+		--model-path "$(MODEL)" \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/ocr_benchmarks/parseq_finetuned \
+		--detailed-metrics
+	@echo "$(GREEN)✅ Avaliação concluída!$(RESET)"
+	@echo "$(CYAN)📊 Métricas: outputs/ocr_benchmarks/parseq_finetuned/$(RESET)"
+
+# Comparar modelo original vs fine-tuned
+ocr-enhanced-compare-finetuned:
+ifndef MODEL
+	@echo "$(RED)❌ Especifique: make ocr-enhanced-compare-finetuned MODEL=caminho/do/modelo$(RESET)"
+	@exit 1
+endif
+	@echo "$(MAGENTA)📊 Comparando Original vs Fine-tuned$(RESET)"
+	@echo ""
+	@echo "$(BLUE)1/2 Avaliando modelo original...$(RESET)"
+	@make ocr-enhanced
+	@echo ""
+	@echo "$(BLUE)2/2 Avaliando modelo fine-tuned...$(RESET)"
+	@make ocr-enhanced-eval MODEL="$(MODEL)"
+	@echo ""
+	@echo "$(CYAN)📊 Gerando comparação...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/compare_models.py \
+		--baseline outputs/ocr_benchmarks/parseq_enhanced \
+		--finetuned outputs/ocr_benchmarks/parseq_finetuned \
+		--output outputs/enhanced_parseq/finetuned_comparison
+	@echo "$(GREEN)✅ Comparação concluída!$(RESET)"
+
+# ========================================
+# 7. SYNTHETIC DATA GENERATION
+# ========================================
+
+# Gerar dados sintéticos para fine-tuning
+ocr-enhanced-generate-synthetic:
+	@echo "$(BLUE)🎨 Gerando dados sintéticos...$(RESET)"
+ifndef NUM
+	@echo "$(YELLOW)⚠️ Usando quantidade padrão: 10000 amostras$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/generate_synthetic_data.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced_full.yaml \
+		--output data/ocr_synthetic \
+		--num-samples 10000
+else
+	@echo "$(CYAN)Gerando $(NUM) amostras...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/generate_synthetic_data.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced_full.yaml \
+		--output data/ocr_synthetic \
+		--num-samples $(NUM)
+endif
+	@echo "$(GREEN)✅ Dados sintéticos gerados!$(RESET)"
+	@echo "$(CYAN)📂 Saída: data/ocr_synthetic/$(RESET)"
+
+# ========================================
+# 8. ANÁLISE & VISUALIZAÇÕES
+# ========================================
+
+# Visualizar componentes do pipeline
+ocr-enhanced-visualize:
+ifndef IMAGE
+	@echo "$(RED)❌ Especifique: make ocr-enhanced-visualize IMAGE=caminho/da/imagem$(RESET)"
+	@exit 1
+endif
+	@echo "$(BLUE)🎨 Visualizando pipeline step-by-step...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/visualize_pipeline.py \
+		--config $(CONFIG_DIR)/ocr/parseq_enhanced.yaml \
+		--image "$(IMAGE)" \
+		--output outputs/enhanced_parseq/visualizations \
+		--show-all-steps
+	@echo "$(GREEN)✅ Visualizações geradas!$(RESET)"
+	@echo "$(CYAN)📂 Saída: outputs/enhanced_parseq/visualizations/$(RESET)"
+
+# Análise de erros detalhada
+ocr-enhanced-error-analysis:
+	@echo "$(BLUE)🔍 Análise de erros detalhada...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/analyze_errors.py \
+		--results outputs/ocr_benchmarks/parseq_enhanced \
+		--test-data $(DATA_DIR)/ocr_test \
+		--output outputs/enhanced_parseq/error_analysis \
+		--categorize-errors \
+		--visualize
+	@echo "$(GREEN)✅ Análise de erros concluída!$(RESET)"
+	@echo "$(CYAN)📊 Relatório: outputs/enhanced_parseq/error_analysis/$(RESET)"
+
+# ========================================
+# 9. WORKFLOW COMPLETO
+# ========================================
+
+# Workflow completo: setup → test → experiment → report
+workflow-enhanced-parseq:
+	@echo "$(MAGENTA)🎓 WORKFLOW COMPLETO - Enhanced PARSeq$(RESET)"
+	@echo "$(CYAN)═══════════════════════════════════════$(RESET)"
+	@echo ""
+	@echo "$(BLUE)1/6 🔧 Setup: Baixando modelos...$(RESET)"
+	@make ocr-parseq-setup
+	@echo ""
+	@echo "$(BLUE)2/6 📦 Preparando dataset OCR...$(RESET)"
+	@make ocr-prepare-data
+	@echo ""
+	@echo "$(BLUE)3/6 🧪 Teste rápido (demo)...$(RESET)"
+	@make ocr-enhanced-demo
+	@echo ""
+	@echo "$(BLUE)4/6 📊 Estudo de ablação...$(RESET)"
+	@make ocr-enhanced-ablation
+	@echo ""
+	@echo "$(BLUE)5/6 🔬 Comparação vs baseline...$(RESET)"
+	@make ocr-enhanced-vs-baseline
+	@echo ""
+	@echo "$(BLUE)6/6 📈 Gerando relatório final...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/generate_report.py \
+		--ablation outputs/enhanced_parseq/ablation \
+		--comparison outputs/enhanced_parseq/comparison \
+		--output outputs/enhanced_parseq/final_report.pdf
+	@echo ""
+	@echo "$(GREEN)🎉 WORKFLOW COMPLETO CONCLUÍDO!$(RESET)"
+	@echo "$(YELLOW)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)"
+	@echo "$(CYAN)📊 Resultados:$(RESET)"
+	@echo "   • Demo: outputs/enhanced_parseq/demo/"
+	@echo "   • Ablation: outputs/enhanced_parseq/ablation/"
+	@echo "   • Comparison: outputs/enhanced_parseq/comparison/"
+	@echo "   • 📄 Relatório Final: outputs/enhanced_parseq/final_report.pdf"
+
+# Workflow de fine-tuning completo
+workflow-enhanced-finetune:
+	@echo "$(MAGENTA)🎓 WORKFLOW FINE-TUNING - Enhanced PARSeq$(RESET)"
+	@echo ""
+ifndef TRAIN_DIR
+	@echo "$(RED)❌ Especifique: make workflow-enhanced-finetune TRAIN_DIR=... VAL_DIR=...$(RESET)"
+	@exit 1
+endif
+	@echo "$(BLUE)1/5 📦 Preparando dados...$(RESET)"
+	@make ocr-enhanced-finetune-prepare TRAIN_DIR="$(TRAIN_DIR)" VAL_DIR="$(VAL_DIR)"
+	@echo ""
+	@echo "$(BLUE)2/5 🎨 Gerando dados sintéticos (opcional)...$(RESET)"
+	@make ocr-enhanced-generate-synthetic NUM=5000
+	@echo ""
+	@echo "$(BLUE)3/5 🎓 Fine-tuning do modelo...$(RESET)"
+	@make ocr-enhanced-finetune
+	@echo ""
+	@echo "$(BLUE)4/5 📊 Avaliando modelo fine-tuned...$(RESET)"
+	@make ocr-enhanced-compare-finetuned MODEL=models/parseq_finetuned/best.pt
+	@echo ""
+	@echo "$(BLUE)5/5 📈 Gerando relatório...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/generate_finetune_report.py \
+		--comparison outputs/enhanced_parseq/finetuned_comparison \
+		--output outputs/enhanced_parseq/finetune_report.pdf
+	@echo ""
+	@echo "$(GREEN)🎉 WORKFLOW FINE-TUNING CONCLUÍDO!$(RESET)"
+	@echo "$(CYAN)📄 Relatório: outputs/enhanced_parseq/finetune_report.pdf$(RESET)"
+
+# ========================================
+# 10. HELP & DOCUMENTATION
+# ========================================
+
+# Help específico para Enhanced PARSeq
+help-enhanced-parseq:
+	@echo "$(CYAN)════════════════════════════════════════════════$(RESET)"
+	@echo "$(MAGENTA)  🚀 Enhanced PARSeq - Guia de Comandos$(RESET)"
+	@echo "$(CYAN)════════════════════════════════════════════════$(RESET)"
+	@echo ""
+	@echo "$(GREEN)📌 TESTES RÁPIDOS:$(RESET)"
+	@echo "  ocr-enhanced-demo              Demo interativo com imagem de teste"
+	@echo "  ocr-enhanced                   Teste padrão (modo balanceado)"
+	@echo "  ocr-enhanced-fast              Modo rápido (sem ensemble)"
+	@echo "  ocr-enhanced-quality           Modo alta qualidade (lento)"
+	@echo ""
+	@echo "$(GREEN)📦 BATCH PROCESSING:$(RESET)"
+	@echo "  ocr-enhanced-batch DIR=...     Processar diretório completo"
+	@echo ""
+	@echo "$(GREEN)🔬 EXPERIMENTOS:$(RESET)"
+	@echo "  ocr-enhanced-ablation          Estudo de ablação completo"
+	@echo "  ocr-enhanced-vs-baseline       Comparar vs baseline"
+	@echo "  ocr-enhanced-experiment        Experimento com todos presets"
+	@echo ""
+	@echo "$(GREEN)🎓 FINE-TUNING:$(RESET)"
+	@echo "  ocr-enhanced-finetune-prepare  Preparar dados para fine-tuning"
+	@echo "  ocr-enhanced-finetune          Fine-tuning do modelo"
+	@echo "  ocr-enhanced-eval MODEL=...    Avaliar modelo fine-tuned"
+	@echo "  ocr-enhanced-generate-synthetic Gerar dados sintéticos"
+	@echo ""
+	@echo "$(GREEN)📊 ANÁLISE:$(RESET)"
+	@echo "  ocr-enhanced-visualize IMAGE=  Visualizar pipeline step-by-step"
+	@echo "  ocr-enhanced-error-analysis    Análise detalhada de erros"
+	@echo ""
+	@echo "$(GREEN)🎯 WORKFLOWS:$(RESET)"
+	@echo "  workflow-enhanced-parseq       Workflow completo (demo→ablation→comparação)"
+	@echo "  workflow-enhanced-finetune     Workflow fine-tuning completo"
+	@echo ""
+	@echo "$(YELLOW)💡 EXEMPLOS:$(RESET)"
+	@echo "  make ocr-enhanced-demo IMAGE=test.jpg"
+	@echo "  make ocr-enhanced-batch DIR=data/ocr_test"
+	@echo "  make ocr-enhanced-finetune TRAIN_DATA=data/train VAL_DATA=data/val"
+	@echo ""
+	@echo "$(CYAN)📚 Documentação:$(RESET)"
+	@echo "  • docs/PARSEQ_ENHANCED_GUIDE.md"
+	@echo "  • docs/IMPLEMENTATION_CHECKLIST.md"
+	@echo "  • docs/CODE_EXAMPLES.md"
+	@echo "  • docs/FAQ_ENHANCED_PARSEQ.md"
+	@echo "$(CYAN)════════════════════════════════════════════════$(RESET)"

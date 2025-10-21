@@ -1,0 +1,234 @@
+# =============================================================================
+# 🔧 PARSeq Enhanced - Configuração CORRIGIDA
+# =============================================================================
+# Baseado na análise de erros das estatísticas
+# Data: 2025-10-19
+# Principais mudanças:
+# 1. Usar modelo BASE ao invés de TINY (multi-linha)
+# 2. Preprocessamento mais agressivo
+# 3. Line detector mais sensível
+# 4. Normalização geométrica/fotométrica ativada
+# 5. Pós-processamento contextual forte
+# =============================================================================
+
+engine: parseq_enhanced
+
+# =============================================================================
+# 🎯 MODELO - MUDANÇA CRÍTICA #1
+# =============================================================================
+# ❌ ANTES: parseq_tiny (20MB, rápido, mas FALHA em multi-linha)
+# ✅ AGORA: parseq (60MB, melhor para multi-linha e texto complexo)
+
+model_variant: parseq  # ou 'parseq-base', 'base'
+
+# Alternativas se precisar mais precisão:
+# - parseq_patch16_224 (100MB, mais lento, máxima precisão)
+
+device: 'cuda'  # ou 'cpu' se não tiver GPU
+
+# =============================================================================
+# 📏 LINE DETECTOR - MUDANÇA CRÍTICA #2
+# =============================================================================
+# Problema identificado: crops multi-linha sendo processados como linha única
+# Solução: Ativar detecção de linhas com threshold mais baixo
+
+line_detection:
+  enabled: true
+  method: 'projection'  # projection, morphology, ou hybrid
+  
+  # Parâmetros ajustados para detectar mais linhas
+  min_line_height: 8       # reduzido de 10 (detecta linhas menores)
+  min_gap: 3               # reduzido de 5 (detecta gaps menores)
+  merge_threshold: 5       # reduzido de 10 (evita merge excessivo)
+  
+  # Correção de inclinação (deskew)
+  correct_skew: true
+  max_skew_angle: 10       # aumentado de 5 (corrige mais inclinação)
+  
+  # Debug (desabilitar em produção)
+  save_debug: false
+
+# =============================================================================
+# 🔧 NORMALIZAÇÃO - MUDANÇA CRÍTICA #3
+# =============================================================================
+# Problema: Crops com perspectiva/rotação/sombras causam confusão
+
+geometric_normalization:
+  enabled: true
+  deskew: true
+  max_angle: 10            # aumentado (corrige mais rotação)
+  perspective_warp: true   # corrige perspectiva
+  target_height: 64        # aumentado de 32 (mais resolução)
+
+photometric_normalization:
+  enabled: true
+  denoise: true
+  denoise_strength: 7      # aumentado de 5 (mais denoising)
+  clahe: true              # equalização de histograma
+  clahe_clip_limit: 3.0    # aumentado de 2.0
+  shadow_removal: true     # NOVO - remove sombras
+  binarize: false          # desabilitado (pode perder info)
+
+# =============================================================================
+# 🎨 PREPROCESSING - MUDANÇA CRÍTICA #4
+# =============================================================================
+# Problema: Preprocessamento padrão não é suficiente para crops ruins
+
+preprocessing:
+  # Resize inteligente
+  resize_height: 64        # aumentado de 32
+  maintain_aspect: true
+  
+  # Processamento adaptativo
+  adaptive_threshold: true
+  block_size: 15           # reduzido de 21 (mais fino)
+  c_constant: 10           # ajustado
+  
+  # Morphologia (remove ruído)
+  morphology: true
+  kernel_size: 2           # reduzido de 3 (mais conservador)
+  iterations: 1
+  
+  # Contrast & Sharpness
+  enhance_contrast: true
+  contrast_factor: 1.5     # aumentado de 1.2
+  sharpen: true
+  sharpen_amount: 1.5      # aumentado de 1.0
+  
+  # Background removal
+  remove_background: true  # NOVO
+  background_threshold: 0.8
+  
+  # Inversão automática (se fundo escuro)
+  auto_invert: true
+  invert_threshold: 128
+
+# =============================================================================
+# 🔄 ENSEMBLE & VARIANTS - MUDANÇA CRÍTICA #5
+# =============================================================================
+# Problema: Modelo falhando em single-pass
+# Solução: Gerar múltiplas variantes e fazer ensemble
+
+ensemble:
+  enabled: true
+  num_variants: 5          # aumentado de 3
+  
+  # Variantes a gerar
+  variants:
+    - 'original'
+    - 'enhanced_contrast'  # +30% contrast
+    - 'sharpened'          # +50% sharpen
+    - 'denoised'           # bilateral filter
+    - 'inverted'           # preto/branco invertido
+  
+  # Estratégia de reranking
+  rerank_strategy: 'confidence_length'  # ou 'voting', 'confidence'
+  min_confidence_delta: 0.1              # threshold para aceitar variante
+
+# =============================================================================
+# 📝 POSTPROCESSING - MUDANÇA CRÍTICA #6
+# =============================================================================
+# Problema: Confusões 0↔1, /↔1, L↔I, O↔0
+# Solução: Mapeamento contextual agressivo
+
+postprocessing:
+  enabled: true
+  
+  # Mapeamento contextual de ambiguidades
+  context_mapping:
+    enabled: true
+    # Regras específicas para DATAS e LOTES
+    rules:
+      # Em contexto de data (dd/mm/yyyy)
+      - pattern: '\d[IO]/\d'     # I ou O entre números → 0
+        replace: '0'
+        context: 'date'
+      
+      - pattern: '\d[l|]/\d'     # l ou | entre números → 1
+        replace: '1'
+        context: 'date'
+      
+      # Em contexto de LOTE
+      - pattern: 'L[O0]TE'       # LOTE com O → O
+        replace: 'O'
+        context: 'lot'
+      
+      - pattern: 'V[A4]L'        # VAL com A → A
+        replace: 'A'
+        context: 'expiry'
+  
+  # Fuzzy matching para formatos conhecidos
+  fuzzy_matching:
+    enabled: true
+    patterns:
+      - 'LOTE'
+      - 'VAL'
+      - 'VENCE'
+      - 'FAB'
+      - 'ENV'
+    max_distance: 2  # Levenshtein distance
+  
+  # Correção de caracteres específicos
+  char_corrections:
+    # Números comumente confundidos
+    'O': '0'  # quando em contexto numérico
+    'I': '1'
+    'l': '1'
+    'Z': '2'
+    'S': '5'
+    'G': '6'
+    'B': '8'
+    
+    # Símbolos
+    '|': '/'
+    '\\': '/'
+    '-': '/'  # quando em contexto de data
+  
+  # Remoção de caracteres inválidos
+  strip_invalid: true
+  valid_chars: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/:. -'
+  
+  # Normalização de case
+  uppercase: true  # forçar maiúsculas (menos ambiguidade)
+
+# =============================================================================
+# ⚙️ CONFIGURAÇÕES GERAIS
+# =============================================================================
+
+# Confiança
+confidence_threshold: 0.3  # reduzido de 0.5 (aceita mais resultados)
+
+# Batch processing
+batch_size: 1  # processar um crop por vez (mais estável)
+
+# Timeout
+max_processing_time: 5.0  # segundos por crop
+
+# Cache
+cache_models: true
+cache_dir: 'models/parseq/cache'
+
+# =============================================================================
+# 🐛 DEBUG & OUTPUT
+# =============================================================================
+
+output:
+  save_preprocessed: true   # ATIVAR para debug
+  save_variants: true       # salvar todas as variantes
+  save_line_splits: true    # salvar splits de linha
+  save_text_output: true
+  
+debug:
+  verbose: true
+  log_level: 'INFO'
+  save_failed_crops: true   # crops com CER > 0.5
+
+# =============================================================================
+# 📊 MÉTRICAS & VALIDAÇÃO
+# =============================================================================
+
+evaluation:
+  calculate_cer: true
+  calculate_wer: true
+  save_confusion_matrix: true
+  generate_report: true

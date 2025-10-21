@@ -1,0 +1,28 @@
+# Tesseract OCR específico
+engine: tesseract
+
+# Configuração Tesseract
+config: '--oem 3 --psm 6'
+languages: ['por', 'eng']
+
+# PSM Modes:
+# 6 = Assume a single uniform block of text
+# 7 = Treat the image as a single text line
+# 11 = Sparse text. Find as much text as possible
+
+# OCR Engine Mode (OEM):
+# 0 = Legacy engine only
+# 1 = Neural nets LSTM engine only
+# 2 = Legacy + LSTM engines
+# 3 = Default, based on what is available
+
+# Thresholds
+confidence_threshold: 0.6
+
+# Preprocessing (usa configuração específica para Tesseract)
+preprocessing: ppro-tesseract
+
+# Output
+save_preprocessed: false
+save_text_output: true
+verbose: true
