@@ -1,66 +1,42 @@
 # Datalid 3.0
 
-Sistema para detecção de datas de validade em imagens usando YOLOv8, com foco em segmentação poligonal para facilitar OCR e garantir alta acurácia.
+Sistema modular para detecção e extração de datas de validade em imagens, combinando detecção/segmentação (YOLO) com pipelines OCR e pós-processamento especializado para datas.
 
 ## Objetivo
-Detectar e segmentar datas de validade em produtos, utilizando modelos de visão computacional modernos.
+- Fornecer um pipeline robusto, configurável e fácil de integrar para localizar regiões candidatas e extrair informações de datas com confiança.
 
-## Tecnologias Utilizadas
-- Python 3.10+
-- YOLOv8 (segmentação poligonal e bounding box)
-- Makefile para automação de comandos
-- TensorBoard para monitoramento
-- Estrutura modular para processamento, treinamento e validação
+## Visão geral (essencial)
+- Detector/segmentador (YOLO) identifica regiões relevantes.
+- Normalização e/ou segmentação de linhas para melhorar entrada do OCR.
+- Engines OCR configuráveis (PARSeq, TrOCR, Tesseract, OpenOCR, EasyOCR, etc.).
+- Pós-processamento: validação, parsing e heurísticas específicas para datas.
 
-## Estrutura do Projeto
-- `src/` - Código principal
-- `scripts/` - Scripts utilitários
-- `data/` - Dados brutos e processados
-- `config/` - Configurações dos modelos
-- `docs/` - Documentação detalhada
+## Uso mínimo necessário
+1. Instalar dependências: veja `requirements.txt`.
+2. Rodar inferência em uma imagem (exemplo mínimo):
+   - scripts de inferência: `scripts/inference/predict_single.py` (aponta imagem e modelo).
+3. Ajustes rápidos: altere presets e pipelines em `config/` e `config/pipeline/`.
 
-## Instalação
+## Estrutura principal
+- `src/` — código-fonte principal (yolo, ocr, pipeline, utils).
+- `scripts/` — utilitários para inferência, treinamento, avaliação e preparação de dados.
+- `config/` — configurações e presets (engines, pipelines, experimentos).
+- `data/` — imagens, datasets e resultados amostra.
+- `docs/` — documentação técnica (arquitetura, avaliação, pré-processamento, etc.).
 
-```bash
-# Clonar repositório
-git clone https://github.com/dev-rafaelmachado/datalid.git
-cd datalid
+## Configuração e extensibilidade (rápido)
+- Comportamento guiado por YAML em `config/` e `config/ocr/`.
+- Componentes são modulares: troque a engine OCR ou o modelo YOLO via configs e presets.
+- Experimentos reproduzíveis em `experiments/` (presets / args.yaml).
 
-# Instalar dependências
-make install-all
-```
+## Onde olhar primeiro
+- `docs/ARCHITECTURE.md` — visão técnica resumida do fluxo e decisões de design.
+- `scripts/inference/predict_single.py` — ponto de entrada para inferência rápida.
+- `config/project_config.yaml` e `config/pipeline/full_pipeline.yaml` — configuração do pipeline padrão.
 
-## Principais Comandos
+## Contribuição e contato
+- Abra uma issue para bugs ou sugestões.
+- Mantenha alterações na pasta `experiments/` e `config/` para reprodutibilidade.
 
-### Processamento e Treinamento Básico
-```bash
-make quick-process        # Processa dados rapidamente
-make train-quick          # Treina modelo de segmentação
-make validate-segment     # Valida dataset segmentado
-make tensorboard          # Inicia monitoramento de métricas
-```
-
-### 📊 Análise de Curvas de Aprendizado (Novo!)
-```bash
-# Workflow completo: valida se os modelos estão realmente aprendendo
-make workflow-learning-curves        # Todos os modelos (12 treinamentos)
-make workflow-learning-curves-quick  # Apenas Nano (teste rápido)
-
-# Comandos individuais
-make process-fractions              # Cria datasets com 25%, 50%, 75%, 100%
-make train-fractions-nano           # Treina Nano em todas as frações
-make train-fractions-small          # Treina Small em todas as frações
-make train-fractions-medium         # Treina Medium em todas as frações
-make compare-learning-curves        # Analisa e compara resultados
-```
-
-## Documentação
-Acesse a pasta `docs/` para guias completos:
-- **LEARNING_CURVES.md** - Sistema de análise de curvas de aprendizado ⭐ NOVO
-- Processamento, treinamento, validação
-- Análise de erros e solução de problemas
-- Comparação de modelos e métricas
-
----
-
-Para dúvidas, consulte a documentação ou abra uma issue no repositório.
+## Licença
+- Verifique o arquivo de licença (adicionar se ausente).
