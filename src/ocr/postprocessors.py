@@ -1,210 +1,445 @@
 """
-📅 Pós-processadores de Texto OCR
-Parse e validação de datas extraídas.
+📅 Pós-processadores de Texto OCR 
+Parse e validação de datas extraídas com suporte a múltiplos formatos, idiomas e ruídos de OCR.
 """
 
+import calendar
 import re
 from datetime import datetime
+from difflib import SequenceMatcher
 from typing import Any, Dict, List, Optional, Tuple
 
 from loguru import logger
 
 
 class DateParser:
-    """Parser e validador de datas."""
+    """Parser de datas extremamente robusto para textos OCR com ruído."""
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        """
-        Inicializa o parser de datas.
-        
-        Args:
-            config: Configuração de parsing
-        """
         self.config = config or {}
-        self.date_formats = self.config.get('date_formats', [
-            '%d/%m/%Y',
-            '%d/%m/%y',
-            '%d.%m.%Y',
-            '%d-%m-%Y',
-            '%d %m %Y',
-            '%d%m%Y'
-        ])
+        self._build_month_mappings()
+        self._build_patterns()
         
-        validation = self.config.get('validation', {})
-        self.min_year = validation.get('min_year', 2024)
-        self.max_year = validation.get('max_year', 2035)
-        self.allow_past = validation.get('allow_past', False)
+    def _build_month_mappings(self):
+        """Mapeamento completo de meses em português e inglês"""
+        self.MONTHS_PT = {
+            'janeiro': 1, 'jan': 1, 'janr': 1, 'jane': 1,
+            'fevereiro': 2, 'fev': 2, 'fevr': 2,
+            'março': 3, 'marco': 3, 'mar': 3, 'mar¢o': 3, 'marco': 3,
+            'abril': 4, 'abr': 4, 'abri': 4,
+            'maio': 5, 'mai': 5, 'maio': 5,
+            'junho': 6, 'jun': 6, 'junh': 6,
+            'julho': 7, 'jul': 7, 'julh': 7,
+            'agosto': 8, 'ago': 8, 'agos': 8,
+            'setembro': 9, 'set': 9, 'sete': 9,
+            'outubro': 10, 'out': 10, 'outu': 10,
+            'novembro': 11, 'nov': 11, 'novo': 11,
+            'dezembro': 12, 'dez': 12, 'deze': 12
+        }
         
-        corrections = self.config.get('corrections', {})
-        self.apply_corrections = corrections.get('enabled', True)
-        self.common_errors = corrections.get('common_errors', {
-            'O': '0', 'o': '0',
-            'I': '1', 'l': '1',
-            'S': '5', 'B': '8',
-            'Z': '2', 'G': '6'
-        })
+        self.MONTHS_EN = {
+            'january': 1, 'jan': 1,
+            'february': 2, 'feb': 2,
+            'march': 3, 'mar': 3,
+            'april': 4, 'apr': 4,
+            'may': 5,
+            'june': 6, 'jun': 6,
+            'july': 7, 'jul': 7,
+            'august': 8, 'aug': 8,
+            'september': 9, 'sep': 9,
+            'october': 10, 'oct': 10,
+            'november': 11, 'nov': 11,
+            'december': 12, 'dec': 12
+        }
+        
+        self.MONTHS_ABBR = {
+            'jan': 1, 'fev': 2, 'mar': 3, 'abr': 4, 'mai': 5, 'jun': 6,
+            'jul': 7, 'ago': 8, 'set': 9, 'out': 10, 'nov': 11, 'dez': 12
+        }
+        
+        self.all_months = {**self.MONTHS_PT, **self.MONTHS_EN, **self.MONTHS_ABBR}
+    
+    def _build_patterns(self):
+        """Compila todos os padrões regex para detecção de datas"""
+        # Padrão para datas do tipo 01MAR26 (seu caso específico)
+        self.pattern_abr_month = re.compile(
+            r'\b(\d{1,2})?\s*([A-Z]{3,4})\s*(\d{2,4})\b', 
+            re.IGNORECASE
+        )
+        
+        # Padrões numéricos com separadores
+        self.patterns_numeric = [
+            re.compile(r'\b(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2,4})\b'),  # DD/MM/YYYY
+            re.compile(r'\b(\d{2,4})[/.\-](\d{1,2})[/.\-](\d{1,2})\b'),  # YYYY/MM/DD
+            re.compile(r'\b(\d{1,2})\s*[/.\-]\s*(\d{2,4})\b'),           # MM/YYYY
+            re.compile(r'\b(\d{6,8})\b'),                                # DDMMYYYY ou MMDDYYYY
+        ]
+        
+        # Padrões textuais
+        self.patterns_text = [
+            re.compile(r'\b(\d{1,2})?\s*(?:de\s+)?([a-z]+)\s*(?:de\s+)?(\d{2,4})\b', re.IGNORECASE),
+            re.compile(r'\b([a-z]+)\s+(\d{1,2})\s*,?\s*(\d{2,4})\b', re.IGNORECASE),
+            re.compile(r'\b([a-z]{3,})[/.\-\s]*(\d{2,4})\b', re.IGNORECASE),  # MAR/2026
+        ]
+        
+        # Padrões agressivos para busca ampla
+        self.patterns_aggressive = [
+            re.compile(r'(\d{1,2})[^\w]?([A-Z]{3})[^\w]?(\d{2})'),  # 01-MAR-26
+            re.compile(r'([A-Z]{3})[^\w]?(\d{1,2})[^\w]?(\d{2,4})'), # MAR-01-26
+        ]
     
     def parse(self, text: str) -> Tuple[Optional[datetime], float]:
         """
-        Faz parse do texto para extrair data.
+        Parse robusto de data retornando a data e confiança
         
         Args:
-            text: Texto extraído pelo OCR
+            text: Texto OCR extraído
             
         Returns:
-            Tupla (data, confiança)
+            Tuple (datetime, confidence) ou (None, 0.0) se não encontrado
         """
-        if not text or text.strip() == '':
+        if not text or not text.strip():
+            return None, 0.0
+            
+        original_text = text.strip()
+        logger.info(f"📅 [ULTRA PARSE] Texto: '{original_text}'")
+        
+        # Aplica correções OCR
+        cleaned_text = self._apply_advanced_ocr_corrections(original_text)
+        if cleaned_text != original_text:
+            logger.info(f"🔧 Texto corrigido: '{cleaned_text}'")
+        
+        # Tenta múltiplas estratégias de parsing
+        all_candidates = []
+        
+        # 1. Estratégia principal: datas com meses abreviados (01MAR26)
+        all_candidates.extend(self._extract_abbreviated_month_dates(cleaned_text))
+        
+        # 2. Formatos numéricos tradicionais
+        all_candidates.extend(self._extract_numeric_dates(cleaned_text))
+        
+        # 3. Formatos textuais
+        all_candidates.extend(self._extract_textual_dates(cleaned_text))
+        
+        # 4. Busca agressiva
+        all_candidates.extend(self._extract_aggressive_dates(cleaned_text))
+        
+        # 5. Fallback: procura por padrões próximos
+        if not all_candidates:
+            all_candidates.extend(self._extract_fallback_dates(cleaned_text))
+        
+        # Filtra e classifica candidatos
+        valid_dates = self._filter_and_rank_dates(all_candidates)
+        
+        if not valid_dates:
+            logger.warning(f"❌ Nenhuma data válida encontrada em: '{original_text}'")
             return None, 0.0
         
-        # Limpar texto
-        text = text.strip()
-        
-        # Aplicar correções de OCR
-        if self.apply_corrections:
-            text = self._apply_ocr_corrections(text)
-        
-        # Tentar extrair data com regex
-        date_candidates = self._extract_date_candidates(text)
-        
-        if not date_candidates:
-            logger.debug(f"📅 Nenhuma data encontrada em: '{text}'")
-            return None, 0.0
-        
-        # Tentar fazer parse de cada candidata
-        for candidate in date_candidates:
-            parsed_date, confidence = self._try_parse_date(candidate)
-            if parsed_date:
-                # Validar data
-                if self._validate_date(parsed_date):
-                    logger.debug(f"✅ Data válida: {parsed_date.strftime('%d/%m/%Y')} (conf: {confidence:.2f})")
-                    return parsed_date, confidence
-                else:
-                    logger.debug(f"❌ Data inválida: {parsed_date.strftime('%d/%m/%Y')}")
-        
-        return None, 0.0
+        # Retorna a melhor data
+        best_date, best_confidence = valid_dates[0]
+        logger.success(f"✅ Data extraída: {best_date.strftime('%d/%m/%Y')} (conf: {best_confidence:.2f})")
+        return best_date, best_confidence
     
-    def _apply_ocr_corrections(self, text: str) -> str:
-        """Corrige erros comuns de OCR."""
+    def _apply_advanced_ocr_corrections(self, text: str) -> str:
+        """Aplica correções avançadas para ruídos comuns de OCR"""
+        corrections = {
+            # Correções de caracteres
+            'O': '0', 'o': '0', 'Q': '0', 'Ø': '0',
+            'I': '1', 'l': '1', '|': '1', '!': '1',
+            'Z': '2', 'z': '2',
+            'A': '4', 
+            'S': '5', 
+            'G': '6', 
+            'T': '7',
+            'B': '8', 'R': '8',
+            'g': '9', 'q': '9',
+            
+            # Correções contextuais para meses
+            'M6': 'M', 'M8': 'M', 'MA': 'M',
+            'AP': 'APR', 'AB': 'ABR',
+            'lOTE': 'LOTE', 'L0TE': 'LOTE',
+            'VA1': 'VAL', 'VAI': 'VAL',
+        }
+        
+        # Aplica substituições diretas
         corrected = text
-        for wrong, correct in self.common_errors.items():
-            corrected = corrected.replace(wrong, correct)
+        for wrong, right in corrections.items():
+            corrected = corrected.replace(wrong, right)
         
-        if corrected != text:
-            logger.debug(f"🔧 Correções aplicadas: '{text}' → '{corrected}'")
+        # Padroniza separadores
+        corrected = re.sub(r'[\s\.\-_]+', ' ', corrected)
         
-        return corrected
+        # Remove ruídos comuns após datas
+        corrected = re.sub(r'(\d{1,2}[A-Z]{3}\d{2})[A-Z0-9]*\b', r'\1', corrected)
+        corrected = re.sub(r'(\d{1,2}/\d{1,2}/\d{2,4})[^/\d\s]*\b', r'\1', corrected)
+        
+        # Corrige anos comuns
+        corrected = re.sub(r'\b25(\d{2})\b', r'20\1', corrected)  # 2526 -> 2026
+        corrected = re.sub(r'\b24(\d{2})\b', r'20\1', corrected)  # 2426 -> 2026
+        
+        return corrected.strip()
     
-    def _extract_date_candidates(self, text: str) -> List[str]:
-        """Extrai candidatas a data usando regex."""
-        patterns = [
-            r'\b\d{1,2}[/.\-\s]\d{1,2}[/.\-\s]\d{4}\b',  # DD/MM/YYYY
-            r'\b\d{1,2}[/.\-\s]\d{1,2}[/.\-\s]\d{2}\b',  # DD/MM/YY
-            r'\b\d{8}\b',  # DDMMYYYY
-        ]
-        
+    def _extract_abbreviated_month_dates(self, text: str) -> List[Tuple[datetime, float]]:
+        """Extrai datas no formato 01MAR26 (seu caso específico)"""
         candidates = []
-        for pattern in patterns:
-            matches = re.findall(pattern, text)
-            candidates.extend(matches)
         
+        for match in self.pattern_abr_month.finditer(text):
+            try:
+                day_str, month_str, year_str = match.groups()
+                
+                # Parse do dia (opcional)
+                day = int(day_str) if day_str else 1
+                
+                # Parse do mês
+                month = self._parse_month_abbreviation(month_str.upper())
+                if not month:
+                    continue
+                
+                # Parse do ano
+                year = int(year_str)
+                if year < 100:
+                    year += 2000  # 26 -> 2026
+                
+                # Valida e cria data
+                if self._is_valid_date(year, month, day):
+                    date_obj = datetime(year, month, day)
+                    confidence = 0.95  # Alta confiança para este formato
+                    candidates.append((date_obj, confidence))
+                    logger.debug(f"  ✅ Formato abreviado: {day:02d}/{month:02d}/{year}")
+                    
+            except (ValueError, TypeError) as e:
+                logger.debug(f"  ❌ Erro no formato abreviado: {e}")
+                continue
+                
         return candidates
     
-    def _try_parse_date(self, date_str: str) -> Tuple[Optional[datetime], float]:
-        """Tenta fazer parse da data com múltiplos formatos."""
-        # Normalizar separadores
-        normalized = date_str.replace('.', '/').replace('-', '/').replace(' ', '/')
+    def _extract_numeric_dates(self, text: str) -> List[Tuple[datetime, float]]:
+        """Extrai datas em formatos numéricos"""
+        candidates = []
         
-        for fmt in self.date_formats:
+        for pattern in self.patterns_numeric:
+            for match in pattern.finditer(text):
+                try:
+                    groups = match.groups()
+                    
+                    if len(groups) == 3:
+                        # DD/MM/YYYY ou YYYY/MM/DD
+                        if len(groups[2]) == 4:  # YYYY/MM/DD
+                            year, month, day = int(groups[0]), int(groups[1]), int(groups[2])
+                        else:  # DD/MM/YYYY
+                            day, month, year = int(groups[0]), int(groups[1]), int(groups[2])
+                            if year < 100:
+                                year += 2000
+                    
+                    elif len(groups) == 2:
+                        # MM/YYYY
+                        month, year = int(groups[0]), int(groups[1])
+                        if year < 100:
+                            year += 2000
+                        day = 1  # Primeiro dia do mês
+                    
+                    elif len(groups) == 1:
+                        # DDMMYYYY
+                        date_str = groups[0]
+                        if len(date_str) == 6:
+                            day, month, year = int(date_str[:2]), int(date_str[2:4]), int(date_str[4:]) + 2000
+                        elif len(date_str) == 8:
+                            day, month, year = int(date_str[:2]), int(date_str[2:4]), int(date_str[4:8])
+                        else:
+                            continue
+                    
+                    if self._is_valid_date(year, month, day):
+                        date_obj = datetime(year, month, day)
+                        confidence = 0.85
+                        candidates.append((date_obj, confidence))
+                        
+                except (ValueError, TypeError):
+                    continue
+                    
+        return candidates
+    
+    def _extract_textual_dates(self, text: str) -> List[Tuple[datetime, float]]:
+        """Extrai datas com meses por extenso"""
+        candidates = []
+        text_lower = text.lower()
+        
+        for pattern in self.patterns_text:
+            for match in pattern.finditer(text_lower):
+                try:
+                    groups = match.groups()
+                    
+                    if len(groups) == 3:
+                        if groups[0].isdigit():
+                            # "15 de março de 2025"
+                            day, month_str, year_str = groups
+                        else:
+                            # "março 15 2025" 
+                            month_str, day, year_str = groups
+                    elif len(groups) == 2:
+                        # "MAR/2026"
+                        month_str, year_str = groups
+                        day = 1
+                    
+                    # Parse do mês
+                    month = self._parse_month_name(month_str)
+                    if not month:
+                        continue
+                    
+                    # Parse do ano
+                    year = int(year_str)
+                    if year < 100:
+                        year += 2000
+                    
+                    # Parse do dia
+                    day = int(day) if str(day).isdigit() else 1
+                    
+                    if self._is_valid_date(year, month, day):
+                        date_obj = datetime(year, month, day)
+                        confidence = 0.90
+                        candidates.append((date_obj, confidence))
+                        
+                except (ValueError, TypeError):
+                    continue
+                    
+        return candidates
+    
+    def _extract_aggressive_dates(self, text: str) -> List[Tuple[datetime, float]]:
+        """Busca agressiva por padrões de data"""
+        candidates = []
+        
+        for pattern in self.patterns_aggressive:
+            for match in pattern.finditer(text.upper()):
+                try:
+                    groups = match.groups()
+                    if len(groups) == 3:
+                        # Tenta diferentes combinações
+                        for day_idx, month_idx, year_idx in [(0, 1, 2), (1, 0, 2)]:
+                            if groups[month_idx].isalpha() and groups[day_idx].isdigit():
+                                month = self._parse_month_abbreviation(groups[month_idx])
+                                if month:
+                                    day = int(groups[day_idx])
+                                    year = int(groups[year_idx])
+                                    if year < 100:
+                                        year += 2000
+                                    
+                                    if self._is_valid_date(year, month, day):
+                                        date_obj = datetime(year, month, day)
+                                        candidates.append((date_obj, 0.75))
+                                        break
+                except (ValueError, TypeError):
+                    continue
+                    
+        return candidates
+    
+    def _extract_fallback_dates(self, text: str) -> List[Tuple[datetime, float]]:
+        """Fallback: procura por qualquer padrão que se pareça com data"""
+        candidates = []
+        
+        # Procura por padrão DDMMMYY em qualquer lugar do texto
+        fallback_pattern = re.compile(r'(\d{1,2})([A-Z]{3,4})(\d{2})', re.IGNORECASE)
+        
+        for match in fallback_pattern.finditer(text):
             try:
-                parsed_date = datetime.strptime(normalized, fmt)
+                day_str, month_str, year_str = match.groups()
+                day = int(day_str)
+                month = self._parse_month_abbreviation(month_str.upper())
+                year = int(year_str) + 2000
                 
-                # Se ano de 2 dígitos, ajustar para século correto
-                if parsed_date.year < 100:
-                    if parsed_date.year < 50:
-                        parsed_date = parsed_date.replace(year=parsed_date.year + 2000)
-                    else:
-                        parsed_date = parsed_date.replace(year=parsed_date.year + 1900)
-                
-                # Calcular confiança baseada em formato
-                confidence = self._calculate_confidence(date_str, fmt)
-                
-                return parsed_date, confidence
-                
-            except ValueError:
+                if month and self._is_valid_date(year, month, day):
+                    date_obj = datetime(year, month, day)
+                    candidates.append((date_obj, 0.65))  # Confiança mais baixa
+                    
+            except (ValueError, TypeError):
                 continue
-        
-        return None, 0.0
+                
+        return candidates
     
-    def _calculate_confidence(self, date_str: str, format_used: str) -> float:
-        """Calcula confiança baseada em características da data."""
-        confidence = 0.8  # Base
+    def _parse_month_abbreviation(self, month_str: str) -> Optional[int]:
+        """Parse robusto de abreviações de mês"""
+        if not month_str:
+            return None
+            
+        month_str = month_str.upper().strip()
         
-        # Formato completo (YYYY) é mais confiável
-        if 'Y' in format_used and len([c for c in format_used if c == 'Y']) == 4:
-            confidence += 0.1
+        # Mapeamento direto
+        direct_map = {
+            'JAN': 1, 'FEB': 2, 'FEV': 2, 'MAR': 3, 'APR': 4, 'ABR': 4,
+            'MAY': 5, 'MAI': 5, 'JUN': 6, 'JUL': 7, 'AUG': 8, 'AGO': 8,
+            'SEP': 9, 'SET': 9, 'OCT': 10, 'OUT': 10, 'NOV': 11, 'DEC': 12, 'DEZ': 12
+        }
         
-        # Separadores claros são mais confiáveis
-        if '/' in date_str or '.' in date_str or '-' in date_str:
-            confidence += 0.05
+        if month_str in direct_map:
+            return direct_map[month_str]
         
-        # Normalizar para [0, 1]
-        return min(confidence, 1.0)
+        # Tenta correções comuns de OCR
+        corrections = {
+            'MARC': 'MAR', 'MARS': 'MAR', 'MARÇ': 'MAR',
+            'APRI': 'APR', 'ABRI': 'ABR',
+            'JUNE': 'JUN', 'JULY': 'JUL',
+            'AUGU': 'AUG', 'SEPT': 'SEP',
+            'OCTO': 'OCT', 'DECE': 'DEC'
+        }
+        
+        if month_str in corrections:
+            return direct_map.get(corrections[month_str])
+        
+        # Busca por similaridade
+        for known_month, month_num in direct_map.items():
+            if SequenceMatcher(None, month_str, known_month).ratio() > 0.7:
+                return month_num
+                
+        return None
     
-    def _validate_date(self, date: datetime) -> bool:
-        """Valida se a data está dentro dos critérios."""
-        # Validar ano
-        if date.year < self.min_year or date.year > self.max_year:
-            logger.debug(f"❌ Ano fora do intervalo: {date.year} (min={self.min_year}, max={self.max_year})")
-            return False
+    def _parse_month_name(self, month_str: str) -> Optional[int]:
+        """Parse de nomes completos de mês com tolerância a erros"""
+        if not month_str:
+            return None
+            
+        month_lower = month_str.lower().strip()
         
-        # Validar se não é passado
-        if not self.allow_past:
-            now = datetime.now()
-            if date < now:
-                logger.debug(f"❌ Data no passado: {date.strftime('%d/%m/%Y')}")
+        # Busca direta
+        if month_lower in self.all_months:
+            return self.all_months[month_lower]
+        
+        # Busca por similaridade
+        for month_name, month_num in self.all_months.items():
+            if SequenceMatcher(None, month_lower, month_name).ratio() > 0.7:
+                return month_num
+                
+        return None
+    
+    def _is_valid_date(self, year: int, month: int, day: int) -> bool:
+        """Valida se é uma data real"""
+        try:
+            datetime(year, month, day)
+            
+            # Validação de intervalo razoável
+            if year < 2000 or year > 2040:
                 return False
+            if month < 1 or month > 12:
+                return False
+            if day < 1 or day > 31:
+                return False
+                
+            return True
+        except ValueError:
+            return False
+    
+    def _filter_and_rank_dates(self, candidates: List[Tuple[datetime, float]]) -> List[Tuple[datetime, float]]:
+        """Filtra e classifica as datas encontradas"""
+        if not candidates:
+            return []
         
-        return True
-    
-    def format_date(self, date: datetime, format: str = '%d/%m/%Y') -> str:
-        """Formata data para string."""
-        return date.strftime(format)
-    
-    def __repr__(self) -> str:
-        return f"DateParser(formats={len(self.date_formats)}, year_range=[{self.min_year}, {self.max_year}])"
+        # Remove duplicatas
+        unique_dates = {}
+        for date, confidence in candidates:
+            date_key = date.strftime('%Y-%m-%d')
+            if date_key not in unique_dates or confidence > unique_dates[date_key][1]:
+                unique_dates[date_key] = (date, confidence)
+        
+        # Ordena por confiança (mais alta primeiro)
+        sorted_dates = sorted(unique_dates.values(), key=lambda x: x[1], reverse=True)
+        
+        return sorted_dates
 
-
-class TextCleaner:
-    """Limpeza e normalização de texto OCR."""
-    
-    @staticmethod
-    def remove_special_chars(text: str, keep: str = '/.-') -> str:
-        """Remove caracteres especiais, mantendo alguns."""
-        pattern = f'[^a-zA-Z0-9{re.escape(keep)}\s]'
-        cleaned = re.sub(pattern, '', text)
-        return cleaned
-    
-    @staticmethod
-    def normalize_whitespace(text: str) -> str:
-        """Normaliza espaços em branco."""
-        return ' '.join(text.split())
-    
-    @staticmethod
-    def remove_non_numeric(text: str, keep: str = '/.-') -> str:
-        """Remove tudo exceto números e separadores."""
-        pattern = f'[^0-9{re.escape(keep)}]'
-        cleaned = re.sub(pattern, '', text)
-        return cleaned
-    
-    @staticmethod
-    def clean_for_date(text: str) -> str:
-        """Limpeza específica para datas."""
-        # Remover tudo exceto números e separadores
-        cleaned = TextCleaner.remove_non_numeric(text, keep='/.-')
-        # Normalizar espaços
-        cleaned = TextCleaner.normalize_whitespace(cleaned)
-        return cleaned.strip()
-
-
-__all__ = ['DateParser', 'TextCleaner']
+__all__ = ["DateParser"]

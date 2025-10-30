@@ -19,6 +19,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.ocr.config import load_ocr_config, load_preprocessing_config
 from src.ocr.engines.easyocr import EasyOCREngine
+from src.ocr.engines.openocr import OpenOCREngine
 from src.ocr.engines.paddleocr import PaddleOCREngine
 from src.ocr.engines.parseq import PARSeqEngine
 from src.ocr.engines.tesseract import TesseractEngine
@@ -43,12 +44,12 @@ def parse_args():
     parser.add_argument(
         "--engine",
         type=str,
-        help="Engine específico para testar (tesseract, easyocr, paddleocr, trocr, parseq). Se não especificado, testa todos."
+        help="Engine específico para testar (tesseract, easyocr, openocr, paddleocr, trocr, parseq). Se não especificado, testa todos."
     )
     parser.add_argument(
         "--engines",
         nargs="+",
-        default=["tesseract", "easyocr", "paddleocr", "trocr", "parseq"],
+        default=["tesseract", "easyocr", "openocr", "paddleocr", "trocr", "parseq"],
         help="Engines para testar (usado se --engine não for especificado)"
     )
     parser.add_argument(
@@ -317,6 +318,7 @@ def main():
     engine_configs = {
         'tesseract': 'config/ocr/tesseract.yaml',
         'easyocr': 'config/ocr/easyocr.yaml',
+        'openocr': 'config/ocr/openocr.yaml',
         'paddleocr': 'config/ocr/paddleocr.yaml',
         'trocr': 'config/ocr/trocr.yaml',
         'parseq': 'config/ocr/parseq.yaml'
@@ -339,6 +341,8 @@ def main():
                 engine = TesseractEngine(load_ocr_config(config_path) if config_path else {})
             elif engine_name == 'easyocr':
                 engine = EasyOCREngine(load_ocr_config(config_path) if config_path else {})
+            elif engine_name == 'openocr':
+                engine = OpenOCREngine(load_ocr_config(config_path) if config_path else {})
             elif engine_name == 'paddleocr':
                 engine = PaddleOCREngine(load_ocr_config(config_path) if config_path else {})
             elif engine_name == 'trocr':

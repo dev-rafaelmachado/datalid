@@ -169,7 +169,7 @@ class GeometricNormalizer:
         # Min area rect
         rect = cv2.minAreaRect(largest_contour)
         box = cv2.boxPoints(rect)
-        box = np.int0(box)
+        box = box.astype(np.int32)
         
         # Verificar se faz sentido (não muito distorcido)
         width = rect[1][0]

@@ -810,7 +810,7 @@ ocr-annotate:
 ocr-test:
 ifndef ENGINE
 	@echo "$(RED)❌ Especifique: make ocr-test ENGINE=paddleocr$(RESET)"
-	@echo "$(YELLOW)Engines disponíveis: tesseract, easyocr, paddleocr, trocr, parseq$(RESET)"
+	@echo "$(YELLOW)Engines disponíveis: tesseract, easyocr, openocr, paddleocr, trocr, parseq$(RESET)"
 	@exit 1
 endif
 	@echo "$(BLUE)🧪 Testando $(ENGINE)...$(RESET)"
@@ -867,11 +867,52 @@ ocr-benchmark:
 	@echo ""
 	@make ocr-test ENGINE=tesseract
 	@make ocr-test ENGINE=easyocr
+	@make ocr-test ENGINE=openocr
 	@make ocr-test ENGINE=paddleocr
 	@make ocr-test ENGINE=trocr
 	@make ocr-test ENGINE=parseq
 	@make ocr-compare
 	@echo "$(GREEN)🎉 Benchmark completo!$(RESET)"
+
+# =============================================================================
+# 🔓 OpenOCR - Open-source High-Accuracy OCR
+# =============================================================================
+# Comandos para testar OpenOCR (backend ONNX ou PyTorch)
+# ✅ Suporte para CPU e GPU (CUDA)
+
+.PHONY: ocr-openocr ocr-openocr-quick ocr-openocr-benchmark
+
+# Teste padrão do OpenOCR
+ocr-openocr:
+	@echo "$(BLUE)🔓 Testando OpenOCR (backend ONNX)...$(RESET)"
+	@echo "$(CYAN)✨ Backend: ONNX (rápido e eficiente)$(RESET)"
+	@make ocr-test ENGINE=openocr
+	@echo "$(GREEN)✅ OpenOCR testado com sucesso!$(RESET)"
+	@echo "$(CYAN)💡 Config: config/ocr/openocr.yaml$(RESET)"
+	@echo "$(CYAN)📊 Relatório: outputs/ocr_benchmarks/openocr/report.html$(RESET)"
+
+# Teste rápido do OpenOCR
+ocr-openocr-quick:
+	@echo "$(BLUE)⚡ Teste rápido OpenOCR...$(RESET)"
+	@echo "$(CYAN)✨ Backend: ONNX (rápido e eficiente)$(RESET)"
+	@echo "$(YELLOW)💡 Dica: Para teste completo use 'make ocr-openocr'$(RESET)"
+	@make ocr-test ENGINE=openocr
+	@echo "$(GREEN)✅ Teste rápido concluído!$(RESET)"
+	@echo "$(CYAN)📊 Relatório: outputs/ocr_benchmarks/openocr/report.html$(RESET)"
+
+# Benchmark completo do OpenOCR
+ocr-openocr-benchmark:
+	@echo "$(MAGENTA)🏆 Benchmark completo do OpenOCR...$(RESET)"
+	@make ocr-openocr
+	@echo ""
+	@echo "$(GREEN)🎉 Benchmark OpenOCR concluído!$(RESET)"
+	@echo "$(CYAN)📊 Métricas disponíveis:$(RESET)"
+	@echo "   - Accuracy (taxa de acerto exata)"
+	@echo "   - CER (Character Error Rate)"
+	@echo "   - WER (Word Error Rate)"
+	@echo "   - Tempo de processamento"
+	@echo ""
+	@echo "$(CYAN)💡 Compare com outros engines: make ocr-benchmark$(RESET)"
 
 # =============================================================================
 # 🤖 TrOCR - Transformer OCR com Normalização de Brilho
@@ -1012,28 +1053,58 @@ prep-demo:
 	@echo "$(GREEN)✅ Demonstração concluída!$(RESET)"
 	@echo "$(CYAN)📊 Resultados salvos em: outputs/preprocessing_demo/$(RESET)"
 
-# Pipeline Completo (YOLO + OCR + Parse)
+# =============================================================================
+# 🚀 FULL PIPELINE (YOLO → OCR → Parse)
+# =============================================================================
+# Pipeline completo para detecção e extração de datas de validade
+
+.PHONY: pipeline-test pipeline-run pipeline-batch pipeline-demo
+
+# Testar pipeline com imagem de exemplo
 pipeline-test:
 	@echo "$(MAGENTA)🚀 Testando pipeline completo...$(RESET)"
-	$(PYTHON) -m src.pipeline.expiry_date \
-		--config $(CONFIG_DIR)/pipeline/full_pipeline.yaml \
-		--test-data $(DATA_DIR)/test_images \
-		--output outputs/pipeline_test
+	$(PYTHON) scripts/pipeline/test_full_pipeline.py \
+		--image data/sample.jpg \
+		--config $(CONFIG_DIR)/pipeline/full_pipeline.yaml
 	@echo "$(GREEN)✅ Pipeline testado!$(RESET)"
 
-# Executar Pipeline em Imagem
+# Executar pipeline em uma imagem específica
 pipeline-run:
 ifndef IMAGE
 	@echo "$(RED)❌ Especifique: make pipeline-run IMAGE=test.jpg$(RESET)"
 	@exit 1
 endif
 	@echo "$(BLUE)🔍 Processando $(IMAGE)...$(RESET)"
-	$(PYTHON) -m src.pipeline.expiry_date \
-		--config $(CONFIG_DIR)/pipeline/full_pipeline.yaml \
+	$(PYTHON) scripts/pipeline/test_full_pipeline.py \
 		--image "$(IMAGE)" \
-		--visualize \
-		--save-output
+		--config $(CONFIG_DIR)/pipeline/full_pipeline.yaml \
+		--save-crops
 	@echo "$(GREEN)✅ Pipeline executado!$(RESET)"
+	@echo "$(CYAN)📊 Resultados em: outputs/pipeline/visualizations/$(RESET)"
+
+# Processar diretório completo
+pipeline-batch:
+ifndef DIR
+	@echo "$(RED)❌ Especifique: make pipeline-batch DIR=data/test_images/$(RESET)"
+	@exit 1
+endif
+	@echo "$(MAGENTA)� Processando diretório: $(DIR)$(RESET)"
+	$(PYTHON) scripts/pipeline/test_full_pipeline.py \
+		--image-dir "$(DIR)" \
+		--config $(CONFIG_DIR)/pipeline/full_pipeline.yaml
+	@echo "$(GREEN)✅ Processamento em lote concluído!$(RESET)"
+	@echo "$(CYAN)📊 Resultados em: outputs/pipeline/batch_summary.json$(RESET)"
+
+# Demo interativo do pipeline
+pipeline-demo:
+	@echo "$(MAGENTA)🎬 Demonstração do Full Pipeline$(RESET)"
+	@echo "$(CYAN)Processando imagens de teste...$(RESET)"
+	$(PYTHON) scripts/pipeline/test_full_pipeline.py \
+		--image-dir data/ocr_test/ \
+		--config $(CONFIG_DIR)/pipeline/full_pipeline.yaml \
+		--save-crops
+	@echo "$(GREEN)✅ Demo concluída!$(RESET)"
+	@echo "$(CYAN)📊 Verifique: outputs/pipeline/$(RESET)"
 
 # Experimento: Comparação Completa de OCR
 exp-ocr-comparison:
@@ -1233,6 +1304,25 @@ ocr-enhanced-quality:
 	@echo "$(GREEN)✅ Teste de qualidade concluído!$(RESET)"
 	@echo "$(YELLOW)⚠️ Modo lento, mas máxima precisão$(RESET)"
 
+# 🔍 Diagnóstico completo (salva todas as etapas intermediárias)
+ocr-diagnose:
+ifndef IMAGE
+	@echo "$(RED)❌ Especifique: make ocr-diagnose IMAGE=caminho/imagem.jpg$(RESET)"
+	@echo "$(YELLOW)Exemplo: make ocr-diagnose IMAGE=data/ocr_test/images/IMG001.jpg GT=\"25/10/2025\"$(RESET)"
+	@exit 1
+endif
+	@echo "$(MAGENTA)🔍 DIAGNÓSTICO COMPLETO - Enhanced PARSeq$(RESET)"
+	@echo "$(CYAN)Imagem: $(IMAGE)$(RESET)"
+	@echo "$(CYAN)Ground Truth: $(GT)$(RESET)"
+	@echo "$(CYAN)Salvando todas as etapas intermediárias...$(RESET)"
+	$(PYTHON) $(SCRIPTS_DIR)/ocr/diagnose_enhanced_parseq.py \
+		--image "$(IMAGE)" \
+		$(if $(GT),--ground-truth "$(GT)",) \
+		--output outputs/ocr_debug
+	@echo "$(GREEN)✅ Diagnóstico concluído!$(RESET)"
+	@echo "$(CYAN)📁 Imagens intermediárias salvas em: outputs/ocr_debug/$(RESET)"
+	@echo "$(YELLOW)💡 Analise todas as etapas para identificar o problema$(RESET)"
+
 # ========================================
 # 2. BATCH PROCESSING
 # ========================================
@@ -1285,7 +1375,6 @@ ocr-enhanced-ablation:
 
 # Ablação rápida (subset de combinações)
 ocr-enhanced-ablation-quick:
-:
 	@echo "$(BLUE)🔬 Enhanced PARSeq - Ablação Rápida$(RESET)"
 	@echo "$(YELLOW)Testando combinações principais...$(RESET)"
 	$(PYTHON) $(SCRIPTS_DIR)/ocr/run_ablation.py \

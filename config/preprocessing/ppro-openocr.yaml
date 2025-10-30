@@ -1,0 +1,104 @@
+name: ppro-openocr-sharp
+
+steps:
+  # 1. Normalização suave de iluminação
+  normalize_colors:
+    enabled: true
+    method: gray_world
+  
+  # 2. Resize MAIOR (OpenOCR funciona melhor com imagens grandes)
+  resize:
+    enabled: true
+    min_height: 96   # ⬆️ DOBROU de 56 → 96 (imagens maiores = mais detalhes)
+    min_width: 384   # ⬆️ DOBROU de 224 → 384
+    max_height: 512  # ✨ NOVO: limita pra não explodir memória
+    max_width: 2048  # ✨ NOVO: limita largura máxima
+    maintain_aspect: true
+    interpolation: lanczos  # Mantém - melhor qualidade
+  
+  # 3. Deskew
+  deskew:
+    enabled: true
+    method: contours
+    max_angle: 360
+  
+  # 4. CLAHE - DESABILITADO (estava piorando)
+  clahe:
+    enabled: false
+    clip_limit: 1.5
+    tile_grid_size: [4, 4]
+    color_space: lab
+  
+  # 5. Sharpen MAIS FORTE (reduz blur + aguça texto)
+  sharpen:
+    enabled: true
+    method: unsharp_mask
+    strength: 0.7  # ⬆️ AUMENTADO de 0.3 → 0.7 (mais nítido)
+    radius: 1.0    # ⬆️ AUMENTADO de 0.5 → 1.0 (alcance maior)
+    threshold: 1   # ⬇️ REDUZIDO de 2 → 1 (sharpeia mais áreas)
+  
+  # 6. Denoising DESABILITADO (estava borrando)
+  denoise:
+    enabled: false  # ❌ DESATIVADO - bilateral borra detalhes
+    method: bilateral
+    d: 3
+    sigma_color: 20
+    sigma_space: 20
+  
+  # 7. Padding generoso (imagens maiores = mais margem)
+  padding:
+    enabled: true
+    size: 20  # ⬆️ AUMENTADO de 12 → 20 (proporcional ao tamanho)
+    color: [255, 255, 255]
+  
+  # DESABILITADOS
+  grayscale:
+    enabled: false
+  
+  threshold:
+    enabled: false
+  
+  morphology:
+    enabled: false
+
+# ============================================================================
+# Mudanças para MAIOR + MAIS NÍTIDO:
+# ============================================================================
+# 
+# 🔍 IMAGEM MAIOR:
+# ✅ min_height: 56 → 96 (+71% maior)
+# ✅ min_width: 224 → 384 (+71% maior)
+# ✅ max_height: 512 (novo - evita imagens gigantes)
+# ✅ max_width: 2048 (novo - evita imagens gigantes)
+# 
+# 🔪 MENOS BLUR:
+# ❌ denoise: DESABILITADO (bilateral borra números pequenos)
+# ✅ sharpen strength: 0.3 → 0.7 (mais nítido)
+# ✅ sharpen radius: 0.5 → 1.0 (alcance maior)
+# ✅ sharpen threshold: 2 → 1 (sharpeia mais áreas)
+# 
+# 🎯 OUTROS AJUSTES:
+# ✅ deskew max_angle: 360 → 15° (menos distorção)
+# ✅ padding: 12 → 20 (proporcional ao tamanho maior)
+# ❌ CLAHE: continua desabilitado (estava piorando)
+# 
+# ============================================================================
+# LÓGICA:
+# ============================================================================
+# 
+# Por que MAIOR é melhor:
+# - OpenOCR é CNN-based: mais pixels = mais features extraídas
+# - Seus crops são pequenos: upscale ajuda o modelo a "ver" melhor
+# - Lanczos interpolation mantém qualidade no upscale
+# 
+# Por que DESABILITAR denoise:
+# - Bilateral blur com d=3 ainda borra caracteres finos (1, /, :, .)
+# - OpenOCR já tem robustez interna a ruído
+# - Melhor ter ruído do que blur
+# 
+# Por que AUMENTAR sharpen:
+# - Compensa qualquer blur residual do resize
+# - Aguça bordas de números borrados em JPG comprimido
+# - Radius 1.0 + threshold 1 = mais agressivo mas controlado
+# 
+# ============================================================================

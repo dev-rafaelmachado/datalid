@@ -99,6 +99,9 @@ class ImagePreprocessor:
         # Padding
         if self.steps.get("padding", {}).get("enabled", False):
             processed = self._add_padding(processed)
+            
+        if self.steps.get("deblur", {}).get("enabled", False):
+            processed = self._apply_deblur(processed)
 
         return processed
 
@@ -112,21 +115,48 @@ class ImagePreprocessor:
         resize_config = self.steps.get("resize", {})
         min_height = resize_config.get("min_height", 48)
         min_width = resize_config.get("min_width", 200)
+        max_height = resize_config.get("max_height", None)
+        max_width = resize_config.get("max_width", None)
         maintain_aspect = resize_config.get("maintain_aspect", True)
         interpolation = resize_config.get("interpolation", "cubic")
 
         h, w = image.shape[:2]
 
         if maintain_aspect:
+            # Calculate scale to meet minimum requirements
             scale = max(min_height / h, min_width / w)
+            
+            # Apply minimum scale if needed
             if scale > 1:
                 new_w = int(w * scale)
                 new_h = int(h * scale)
             else:
+                new_w = w
+                new_h = h
+            
+            # Apply maximum constraints if specified
+            if max_height is not None and new_h > max_height:
+                scale_down = max_height / new_h
+                new_h = max_height
+                new_w = int(new_w * scale_down)
+            
+            if max_width is not None and new_w > max_width:
+                scale_down = max_width / new_w
+                new_w = max_width
+                new_h = int(new_h * scale_down)
+            
+            # If no resize needed, return original
+            if new_w == w and new_h == h:
                 return image
         else:
             new_w = min_width
             new_h = min_height
+            
+            # Apply maximum constraints in non-aspect mode
+            if max_width is not None and new_w > max_width:
+                new_w = max_width
+            if max_height is not None and new_h > max_height:
+                new_h = max_height
 
         interp_map = {
             "nearest": cv2.INTER_NEAREST,
@@ -445,14 +475,52 @@ class ImagePreprocessor:
     # Thresholding (existing)
     # -------------------------
     def _apply_clahe(self, image: np.ndarray) -> np.ndarray:
+        """
+        Aplica CLAHE (Contrast Limited Adaptive Histogram Equalization).
+        Preserva cores aplicando apenas no canal de luminância (LAB).
+        """
         cfg = self.steps.get("clahe", {})
         clip_limit = float(cfg.get("clip_limit", 2.0))
         tile_grid_size = tuple(cfg.get("tile_grid_size", [8, 8]))
-        if len(image.shape) == 3:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        color_space = cfg.get("color_space", "lab")  # 'lab' ou 'gray'
+        
         clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
-        enhanced = clahe.apply(image)
-        logger.debug("✨ CLAHE applied")
+        
+        if color_space == "lab" and len(image.shape) == 3:
+            # Preserva cores: aplica CLAHE só no canal L (luminância)
+            # Converte BGR → LAB
+            lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+            
+            # Separa canais L, A, B
+            l_channel, a_channel, b_channel = cv2.split(lab)
+            
+            # Aplica CLAHE apenas no canal L (luminância)
+            l_channel_clahe = clahe.apply(l_channel)
+            
+            # Reconstrói imagem LAB
+            lab_clahe = cv2.merge([l_channel_clahe, a_channel, b_channel])
+            
+            # Volta para BGR
+            enhanced = cv2.cvtColor(lab_clahe, cv2.COLOR_LAB2BGR)
+            logger.debug("✨ CLAHE applied (LAB color space - cores preservadas)")
+            
+        elif color_space == "gray" or len(image.shape) == 2:
+            # Modo grayscale (conversão forçada)
+            if len(image.shape) == 3:
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            enhanced = clahe.apply(image)
+            logger.debug("✨ CLAHE applied (grayscale mode)")
+            
+        else:
+            # Fallback: aplica em cada canal RGB (pode saturar cores)
+            logger.warning("⚠️ CLAHE color_space desconhecido, usando fallback RGB")
+            b, g, r = cv2.split(image)
+            b_clahe = clahe.apply(b)
+            g_clahe = clahe.apply(g)
+            r_clahe = clahe.apply(r)
+            enhanced = cv2.merge([b_clahe, g_clahe, r_clahe])
+            logger.debug("✨ CLAHE applied (RGB channels - pode saturar cores)")
+        
         return enhanced
 
     def _apply_threshold(self, image: np.ndarray) -> np.ndarray:
@@ -574,6 +642,104 @@ class ImagePreprocessor:
         choose = dark_ratio > 0.6
         logger.debug(f"🔍 dark_ratio={dark_ratio:.2f} -> choose_invert={choose}")
         return choose
+    
+    def _apply_deblur(self, image: np.ndarray) -> np.ndarray:
+        """
+        Remove desfoque (motion blur, out-of-focus) usando deconvolução.
+        """
+        cfg = self.steps.get("deblur", {})
+        method = cfg.get("method", "wiener")
+        kernel_size = int(cfg.get("kernel_size", 5))
+        
+        # Garante kernel_size ímpar
+        if kernel_size % 2 == 0:
+            kernel_size += 1
+        
+        try:
+            if method == "wiener":
+                # Wiener Deconvolution (suave, sem artefatos)
+                snr = float(cfg.get("snr", 25))
+                enhanced = self._wiener_deblur(image, kernel_size, snr)
+                logger.debug(f"✨ Wiener deblur applied (kernel={kernel_size}, snr={snr})")
+                
+            elif method == "richardson_lucy":
+                # Richardson-Lucy Deconvolution (agressivo)
+                iterations = int(cfg.get("iterations", 10))
+                enhanced = self._richardson_lucy_deblur(image, kernel_size, iterations)
+                logger.debug(f"✨ Richardson-Lucy deblur applied (kernel={kernel_size}, iter={iterations})")
+                
+            else:
+                logger.warning(f"⚠️ Método de deblur desconhecido: {method}")
+                return image
+                
+            return enhanced
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao aplicar deblur: {e}")
+            return image
+
+    def _wiener_deblur(self, image: np.ndarray, kernel_size: int, snr: float) -> np.ndarray:
+        """
+        Wiener deconvolution - remove desfoque suavemente.
+        """
+        from scipy.signal import wiener
+
+        # Cria kernel de motion blur (horizontal)
+        kernel = np.zeros((kernel_size, kernel_size))
+        kernel[int((kernel_size - 1) / 2), :] = np.ones(kernel_size)
+        kernel /= kernel_size
+        
+        # Aplica em cada canal
+        if len(image.shape) == 3:
+            result = np.zeros_like(image)
+            for i in range(3):
+                # Wiener filter
+                result[:, :, i] = wiener(image[:, :, i], (kernel_size, kernel_size), snr)
+            return np.clip(result, 0, 255).astype(np.uint8)
+        else:
+            result = wiener(image, (kernel_size, kernel_size), snr)
+            return np.clip(result, 0, 255).astype(np.uint8)
+
+    def _richardson_lucy_deblur(self, image: np.ndarray, kernel_size: int, iterations: int) -> np.ndarray:
+        """
+        Richardson-Lucy deconvolution - remove desfoque agressivamente.
+        Requer skimage instalado: pip install scikit-image
+        """
+        try:
+            from skimage import restoration
+            from skimage.util import img_as_float, img_as_ubyte
+        except ImportError:
+            logger.error("❌ scikit-image não instalado. Use: pip install scikit-image")
+            return image
+        
+        # Cria PSF (Point Spread Function) - motion blur horizontal
+        psf = np.zeros((kernel_size, kernel_size))
+        psf[int((kernel_size - 1) / 2), :] = 1
+        psf /= psf.sum()
+        
+        # Converte para float [0, 1]
+        image_float = img_as_float(image)
+        
+        # Aplica Richardson-Lucy
+        if len(image.shape) == 3:
+            result = np.zeros_like(image_float)
+            for i in range(3):
+                result[:, :, i] = restoration.richardson_lucy(
+                    image_float[:, :, i], 
+                    psf, 
+                    num_iter=iterations,
+                    clip=False
+                )
+            # Volta para uint8
+            return img_as_ubyte(np.clip(result, 0, 1))
+        else:
+            result = restoration.richardson_lucy(
+                image_float, 
+                psf, 
+                num_iter=iterations,
+                clip=False
+            )
+            return img_as_ubyte(np.clip(result, 0, 1))
 
     # -------------------------
     # New: Line splitting (split into list of line images)

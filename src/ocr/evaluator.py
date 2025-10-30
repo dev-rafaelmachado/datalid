@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import cv2
 import numpy as np
 import pandas as pd
 from loguru import logger
@@ -15,6 +16,7 @@ from loguru import logger
 from src.ocr.config import load_ocr_config, load_preprocessing_config
 from src.ocr.engines.base import OCREngineBase
 from src.ocr.engines.easyocr import EasyOCREngine
+from src.ocr.engines.openocr import OpenOCREngine
 from src.ocr.engines.paddleocr import PaddleOCREngine
 from src.ocr.engines.parseq import PARSeqEngine
 from src.ocr.engines.parseq_enhanced import EnhancedPARSeqEngine
@@ -58,6 +60,7 @@ class OCREvaluator:
         engine_class = {
             'tesseract': TesseractEngine,
             'easyocr': EasyOCREngine,
+            'openocr': OpenOCREngine,
             'paddleocr': PaddleOCREngine,
             'parseq': PARSeqEngine,
             'parseq_enhanced': EnhancedPARSeqEngine,
@@ -81,7 +84,9 @@ class OCREvaluator:
                        image: np.ndarray,
                        ground_truth: str,
                        engine_name: str,
-                       preprocessor: Optional[ImagePreprocessor] = None) -> Dict[str, Any]:
+                       preprocessor: Optional[ImagePreprocessor] = None,
+                       debug_dir: Optional[Path] = None,
+                       save_debug_images: bool = True) -> Dict[str, Any]:
         """
         Avalia um engine em uma única imagem.
         
@@ -90,6 +95,8 @@ class OCREvaluator:
             ground_truth: Texto esperado
             engine_name: Nome do engine
             preprocessor: Preprocessador opcional
+            debug_dir: Diretório para salvar imagens de debug
+            save_debug_images: Se True, salva imagens intermediárias
             
         Returns:
             Dicionário com resultados
@@ -104,6 +111,18 @@ class OCREvaluator:
             processed_image = preprocessor.process(image)
         else:
             processed_image = image
+        
+        # Salvar debug images: apenas ANTES e DEPOIS (simplificado)
+        if debug_dir and save_debug_images:
+            debug_dir.mkdir(parents=True, exist_ok=True)
+            
+            # 1. Imagem original (antes do pré-processamento)
+            cv2.imwrite(str(debug_dir / "before_preprocessing.png"), image)
+            logger.debug(f"💾 Salva: {debug_dir / 'before_preprocessing.png'}")
+            
+            # 2. Imagem final (depois do pré-processamento)
+            cv2.imwrite(str(debug_dir / "after_preprocessing.png"), processed_image)
+            logger.debug(f"💾 Salva: {debug_dir / 'after_preprocessing.png'}")
         
         # Medir tempo
         start_time = time.time()
@@ -121,6 +140,17 @@ class OCREvaluator:
             'processing_time': processing_time,
             **metrics
         }
+        
+        # Salvar resultado como texto
+        if debug_dir and save_debug_images:
+            result_file = debug_dir / "result.txt"
+            with open(result_file, 'w', encoding='utf-8') as f:
+                f.write(f"Ground Truth: {ground_truth}\n")
+                f.write(f"Predicted: {predicted_text}\n")
+                f.write(f"Confidence: {confidence:.4f}\n")
+                f.write(f"CER: {metrics['character_error_rate']:.4f}\n")
+                f.write(f"Exact Match: {metrics['exact_match']}\n")
+            logger.debug(f"💾 Salva resultado: {result_file}")
         
         return result
     
@@ -491,8 +521,19 @@ if __name__ == "__main__":
     import cv2
     results = []
     
-    for img_file in image_files:
+    # Salvar resultados em
+    output_path = Path(args.output)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    # Criar diretório de debug
+    debug_base_dir = output_path / "debug_images"
+    debug_base_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"🔍 Imagens de debug serão salvas em: {debug_base_dir}")
+    
+    for i, img_file in enumerate(image_files):
         filename = img_file.name
+        
+        logger.info(f"📸 [{i+1}/{len(image_files)}] Processando: {filename}")
         
         # Verificar se tem ground truth
         if filename not in ground_truth:
@@ -512,16 +553,28 @@ if __name__ == "__main__":
             logger.warning(f"⚠️ Erro ao carregar: {filename}")
             continue
         
+        # Criar diretório de debug para esta imagem
+        img_debug_dir = debug_base_dir / img_file.stem
+        
         # Avaliar
         try:
             result = evaluator.evaluate_single(
                 image,
                 expected_text,
                 args.engine,
-                preprocessor=preprocessor
+                preprocessor=preprocessor,
+                debug_dir=img_debug_dir,
+                save_debug_images=True  # Sempre salvar para debug
             )
             result['image_file'] = filename
             results.append(result)
+            
+            # Log do resultado
+            cer = result.get('character_error_rate', 1.0)
+            conf = result.get('confidence', 0.0)
+            pred = result.get('predicted_text', '')
+            match_symbol = "✅" if result.get('exact_match', False) else "❌"
+            logger.info(f"   {match_symbol} CER: {cer:.3f} | Conf: {conf:.3f} | Pred: '{pred[:50]}'")
             
         except Exception as e:
             import traceback
@@ -529,8 +582,9 @@ if __name__ == "__main__":
             logger.debug(f"Traceback: {traceback.format_exc()}")
     
     # Salvar resultados
-    output_path = Path(args.output)
-    output_path.mkdir(parents=True, exist_ok=True)
+    if not results:
+        logger.error("❌ Nenhum resultado obtido!")
+        exit(1)
     
     results_file = output_path / f"{args.engine}_results.json"
     with open(results_file, 'w', encoding='utf-8') as f:

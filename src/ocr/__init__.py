@@ -9,6 +9,7 @@ Inclui visualização e análise estatística detalhada.
 from src.ocr.config import load_ocr_config, load_preprocessing_config
 from src.ocr.engines.base import OCREngineBase
 from src.ocr.engines.easyocr import EasyOCREngine
+from src.ocr.engines.openocr import OpenOCREngine
 from src.ocr.engines.paddleocr import PaddleOCREngine
 from src.ocr.engines.parseq import PARSeqEngine
 from src.ocr.engines.parseq_enhanced import EnhancedPARSeqEngine
@@ -29,6 +30,7 @@ __all__ = [
     'OCREngineBase',
     'TesseractEngine',
     'EasyOCREngine',
+    'OpenOCREngine',
     'PaddleOCREngine',
     'TrOCREngine',
     'PARSeqEngine',

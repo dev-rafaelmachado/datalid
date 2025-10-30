@@ -1,9 +1,9 @@
 """
 🚣 PaddleOCR Engine
-Wrapper para PaddleOCR.
 """
 
-from typing import Any, Dict, Tuple
+import re
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from loguru import logger
@@ -12,7 +12,25 @@ from src.ocr.engines.base import OCREngineBase
 
 
 class PaddleOCREngine(OCREngineBase):
-    """Engine para PaddleOCR."""
+    """Engine para PaddleOCR otimizado para datas de validade."""
+    
+    # Mapeamento de caracteres comuns mal reconhecidos em datas
+    CHAR_CORRECTIONS = {
+        'O': '0', 'o': '0',  # O → zero
+        'I': '1', 'l': '1', '|': '1',  # I, l, pipe → um
+        'S': '5', 's': '5',  # S → cinco
+        'B': '8', 'b': '8',  # B → oito
+        'Z': '2', 'z': '2',  # Z → dois
+        'G': '6', 'g': '6',  # G → seis
+    }
+    
+    # Padrões de data válidos
+    DATE_PATTERNS = [
+        r'\d{2}[/\-\.]\d{2}[/\-\.]\d{4}',  # DD/MM/YYYY
+        r'\d{2}[/\-\.]\d{2}[/\-\.]\d{2}',  # DD/MM/YY
+        r'\d{8}',  # DDMMYYYY
+        r'\d{6}',  # DDMMYY
+    ]
     
     def __init__(self, config: Dict[str, Any]):
         """
@@ -22,12 +40,38 @@ class PaddleOCREngine(OCREngineBase):
             config: Dicionário de configuração
         """
         super().__init__(config)
-        self.lang = config.get('lang', 'pt')
-        self.use_gpu = config.get('use_gpu', True)
+        
+        # Configurações básicas
+        self.lang = config.get('lang', 'en')  # 'en' melhor para números!
         self.use_angle_cls = config.get('use_angle_cls', True)
         self.show_log = config.get('show_log', False)
-        self.det_db_thresh = config.get('det_db_thresh', 0.3)
-        self.rec_batch_num = config.get('rec_batch_num', 6)
+        
+        # Configurações de detecção (otimizadas para datas pequenas)
+        detection = config.get('detection', {})
+        self.det_db_thresh = detection.get('det_db_thresh', 0.2)  # Mais sensível
+        self.det_db_box_thresh = detection.get('det_db_box_thresh', 0.5)
+        self.det_db_unclip_ratio = detection.get('det_db_unclip_ratio', 2.0)
+        self.det_limit_side_len = detection.get('det_limit_side_len', 960)
+        
+        # Configurações de reconhecimento
+        recognition = config.get('recognition', {})
+        self.rec_batch_num = recognition.get('rec_batch_num', 6)
+        
+        # Configurações de classificação de ângulo
+        self.cls_batch_num = config.get('cls_batch_num', 6)
+        self.cls_thresh = config.get('cls_thresh', 0.9)
+        
+        # Dispositivo (CPU ou GPU)
+        # PaddleOCR usa 'use_gpu' mas versões novas podem não suportar
+        self.device = config.get('device', 'cuda' if config.get('use_gpu', True) else 'cpu')
+        
+        # Pós-processamento
+        postproc = config.get('postprocessing', {})
+        self.char_corrections = postproc.get('char_corrections', self.CHAR_CORRECTIONS)
+        self.validate_date = postproc.get('validate_date_format', True)
+        self.extract_date_only = postproc.get('extract_date_only', False)
+        
+        self.use_new_api = True
     
     def initialize(self) -> None:
         """Inicializa o PaddleOCR."""
@@ -37,23 +81,38 @@ class PaddleOCREngine(OCREngineBase):
         try:
             from paddleocr import PaddleOCR
             
-            logger.info(f"🔄 Inicializando PaddleOCR (lang={self.lang}, gpu={self.use_gpu})...")
+            logger.info(f"🔄 Inicializando PaddleOCR para datas (lang={self.lang})...")
             
-            # PaddleOCR mudou a API - agora usa_gpu foi removido
-            # Em vez disso, define automaticamente baseado na disponibilidade
-            # show_log não é mais suportado nas versões recentes
-            self.engine = PaddleOCR(
-                lang=self.lang,
-                use_angle_cls=self.use_angle_cls,
-                det_db_thresh=self.det_db_thresh,
-                rec_batch_num=self.rec_batch_num
-            )
+            # Configuração compatível com PaddleOCR 3.x
+            # Apenas parâmetros suportados e testados
+            paddle_params = {
+                'lang': self.lang,
+                'use_angle_cls': self.use_angle_cls,
+            }
             
-            logger.info("✅ PaddleOCR inicializado")
+            # Adicionar parâmetros de detecção opcionais
+            if self.det_db_thresh is not None:
+                paddle_params['det_db_thresh'] = self.det_db_thresh
+            if self.det_db_box_thresh is not None:
+                paddle_params['det_db_box_thresh'] = self.det_db_box_thresh
+            if self.det_db_unclip_ratio is not None:
+                paddle_params['det_db_unclip_ratio'] = self.det_db_unclip_ratio
+            
+            # Inicializar PaddleOCR
+            self.engine = PaddleOCR(**paddle_params)
+            
+            # Detectar API disponível
+            if hasattr(self.engine, 'predict'):
+                self.use_new_api = True
+                logger.info("✅ PaddleOCR inicializado (API predict)")
+            else:
+                self.use_new_api = False
+                logger.info("✅ PaddleOCR inicializado (API ocr)")
+            
             self._is_initialized = True
             
         except ImportError:
-            logger.error("❌ paddleocr não instalado. Execute: pip install paddleocr paddlepaddle")
+            logger.error("❌ paddleocr não instalado. Execute: pip install paddleocr")
             raise
         except Exception as e:
             logger.error(f"❌ Erro ao inicializar PaddleOCR: {e}")
@@ -64,7 +123,7 @@ class PaddleOCREngine(OCREngineBase):
         Extrai texto usando PaddleOCR.
         
         Args:
-            image: Imagem numpy array (BGR)
+            image: Imagem numpy array (BGR do OpenCV)
             
         Returns:
             Tupla (texto, confiança)
@@ -76,108 +135,157 @@ class PaddleOCREngine(OCREngineBase):
             return "", 0.0
         
         try:
-            # PaddleOCR espera BGR
-            # cls parameter não é mais suportado nas versões recentes
-            results = self.engine.ocr(image)
+            import cv2
+
+            # CRÍTICO: Converter BGR (OpenCV) para RGB (PaddleOCR)
+            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             
-            # Debug: verificar estrutura do resultado
-            logger.debug(f"🔍 PaddleOCR raw results type: {type(results)}")
-            logger.debug(f"🔍 PaddleOCR raw results length: {len(results) if results else 0}")
-            
-            if not results:
-                logger.debug("📝 PaddleOCR: results é None ou vazio")
-                return "", 0.0
-            
-            if not results[0]:
-                logger.debug("📝 PaddleOCR: results[0] é None ou vazio")
-                return "", 0.0
-            
-            # Extrair textos e confianças
-            texts = []
-            confidences = []
-            
-            # Handle different result formats from newer PaddleOCR versions
-            result_data = results[0]
-            logger.debug(f"🔍 result_data type: {type(result_data)}")
-            
-            # Check if it's an OCRResult object (PaddleX API)
-            if hasattr(result_data, 'rec_texts') and hasattr(result_data, 'rec_scores'):
-                logger.debug(f"🔍 OCRResult detected with attributes")
-                rec_texts = getattr(result_data, 'rec_texts', [])
-                rec_scores = getattr(result_data, 'rec_scores', [])
-                
-                if rec_texts and rec_scores:
-                    texts = [str(text) for text in rec_texts if text]
-                    confidences = [float(score) for score in rec_scores if score is not None]
-                else:
-                    logger.debug("📝 PaddleOCR: rec_texts ou rec_scores vazios")
-                    return "", 0.0
-            # Check if it's a dictionary with 'rec_texts' and 'rec_scores'
-            elif isinstance(result_data, dict):
-                logger.debug(f"🔍 result_data keys: {list(result_data.keys())}")
-                if 'rec_texts' in result_data and 'rec_scores' in result_data:
-                    texts = [str(text) for text in result_data['rec_texts'] if text]
-                    confidences = [float(score) for score in result_data['rec_scores'] if score is not None]
-                else:
-                    logger.warning(f"⚠️ PaddleOCR: Formato dict inesperado: {list(result_data.keys())}")
-                    return "", 0.0
-            # Handle traditional list format
-            elif isinstance(result_data, list):
-                logger.debug(f"🔍 result_data list length: {len(result_data)}")
-                for idx, line in enumerate(result_data):
-                    if not line:
-                        continue
-                    
-                    # Verificar se line tem pelo menos 2 elementos
-                    if not isinstance(line, (list, tuple)):
-                        logger.debug(f"⚠️ line {idx} não é list/tuple")
-                        continue
-                    
-                    if len(line) < 2:
-                        logger.debug(f"⚠️ line {idx} tem menos de 2 elementos: {len(line)}")
-                        continue
-                    
-                    # line[0] são as coordenadas da bbox, line[1] é (texto, confiança)
-                    text_data = line[1]
-                    
-                    if not isinstance(text_data, (list, tuple)):
-                        logger.debug(f"⚠️ text_data não é list/tuple: {type(text_data)}")
-                        continue
-                    
-                    if len(text_data) < 2:
-                        logger.debug(f"⚠️ text_data tem menos de 2 elementos: {len(text_data)}")
-                        continue
-                    
-                    text = text_data[0]  # Texto
-                    confidence = text_data[1]  # Confiança
-                    
-                    if text:  # Só adicionar se não for vazio
-                        texts.append(str(text))
-                        confidences.append(float(confidence))
+            # Executar OCR usando a API apropriada
+            if self.use_new_api:
+                results = self.engine.predict(image_rgb)
             else:
-                logger.warning(f"⚠️ PaddleOCR: Tipo de resultado inesperado: {type(result_data)}")
+                results = self.engine.ocr(image_rgb, cls=True)  # cls=True para detectar rotação
+            
+            # Validar resultado
+            if not results or not results[0]:
+                logger.debug("📝 PaddleOCR: Nenhum texto detectado")
                 return "", 0.0
+            
+            # Processar resultados
+            texts, confidences = self._parse_results(results)
             
             if not texts:
-                logger.debug("📝 PaddleOCR: Nenhum texto extraído após processamento")
+                logger.debug("📝 PaddleOCR: Nenhum texto extraído")
                 return "", 0.0
             
             # Combinar textos
             combined_text = ' '.join(texts)
             avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
             
-            # Pós-processar
-            combined_text = self.postprocess(combined_text)
+            # Pós-processar especificamente para datas
+            combined_text = self.postprocess_date(combined_text)
             
-            logger.debug(f"📝 PaddleOCR: '{combined_text}' (confiança: {avg_confidence:.2f})")
+            logger.debug(f"📝 PaddleOCR: '{combined_text}' (conf: {avg_confidence:.2f})")
             
             return combined_text, avg_confidence
             
         except Exception as e:
             logger.error(f"❌ Erro ao extrair texto com PaddleOCR: {e}")
             import traceback
-            logger.error(f"📋 Traceback: {traceback.format_exc()}")
+            logger.error(f"📋 Traceback:\n{traceback.format_exc()}")
             return "", 0.0
+    
+    def _parse_results(self, results: Any) -> Tuple[List[str], List[float]]:
+        """
+        Parseia resultados do PaddleOCR.
+        
+        Args:
+            results: Resultado bruto do PaddleOCR
+            
+        Returns:
+            Tupla (lista_textos, lista_confianças)
+        """
+        texts = []
+        confidences = []
+        
+        result_data = results[0] if isinstance(results, list) and len(results) > 0 else results
+        
+        if not result_data:
+            return texts, confidences
+        
+        # Formato objeto (PaddleX)
+        if hasattr(result_data, 'rec_texts') and hasattr(result_data, 'rec_scores'):
+            texts = [str(text).strip() for text in result_data.rec_texts if text]
+            confidences = [float(score) for score in result_data.rec_scores if score is not None]
+        
+        # Formato dicionário
+        elif isinstance(result_data, dict) and 'rec_texts' in result_data:
+            texts = [str(text).strip() for text in result_data['rec_texts'] if text]
+            confidences = [float(score) for score in result_data['rec_scores'] if score is not None]
+        
+        # Formato lista tradicional
+        elif isinstance(result_data, list):
+            for line in result_data:
+                if not line or len(line) < 2:
+                    continue
+                
+                text_data = line[1]
+                if not isinstance(text_data, (list, tuple)) or len(text_data) < 2:
+                    continue
+                
+                text = str(text_data[0]).strip()
+                confidence = float(text_data[1])
+                
+                if text:
+                    texts.append(text)
+                    confidences.append(confidence)
+        
+        return texts, confidences
+    
+    def postprocess_date(self, text: str) -> str:
+        """
+        Pós-processamento específico para datas de validade.
+        
+        Args:
+            text: Texto bruto extraído
+            
+        Returns:
+            Texto corrigido e validado
+        """
+        if not text:
+            return text
+        
+        # 1. Pós-processamento básico
+        text = self.postprocess(text)
+        
+        # 2. Corrigir caracteres comuns mal reconhecidos
+        for wrong, correct in self.char_corrections.items():
+            text = text.replace(wrong, correct)
+        
+        # 3. Se extract_date_only, tentar extrair apenas a data
+        if self.extract_date_only:
+            text = self._extract_date_from_text(text)
+        
+        # 4. Validar formato de data (opcional)
+        if self.validate_date and text:
+            if not self._is_valid_date_format(text):
+                logger.debug(f"⚠️ Formato de data inválido: '{text}'")
+                # Não retornar vazio, pode ser útil mesmo assim
+        
+        return text
+    
+    def _extract_date_from_text(self, text: str) -> str:
+        """
+        Extrai apenas a data do texto (ignora lote/código).
+        
+        Args:
+            text: Texto completo
+            
+        Returns:
+            Apenas a data extraída
+        """
+        for pattern in self.DATE_PATTERNS:
+            match = re.search(pattern, text)
+            if match:
+                return match.group(0)
+        
+        # Se não encontrou padrão, retornar texto original
+        return text
+    
+    def _is_valid_date_format(self, text: str) -> bool:
+        """
+        Verifica se o texto tem formato de data válido.
+        
+        Args:
+            text: Texto para validar
+            
+        Returns:
+            True se formato válido
+        """
+        for pattern in self.DATE_PATTERNS:
+            if re.fullmatch(pattern, text):
+                return True
+        return False
     
     def get_name(self) -> str:
         """Retorna nome do engine."""

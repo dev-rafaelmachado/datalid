@@ -10,6 +10,7 @@ from loguru import logger
 
 from src.ocr.config import load_ocr_config, load_preprocessing_config
 from src.ocr.engines.easyocr import EasyOCREngine
+from src.ocr.engines.openocr import OpenOCREngine
 from src.ocr.engines.paddleocr import PaddleOCREngine
 from src.ocr.engines.parseq import PARSeqEngine
 from src.ocr.engines.parseq_enhanced import EnhancedPARSeqEngine
@@ -57,6 +58,7 @@ class OCRPipeline(PipelineBase):
         engine_class = {
             'tesseract': TesseractEngine,
             'easyocr': EasyOCREngine,
+            'openocr': OpenOCREngine,
             'paddleocr': PaddleOCREngine,
             'parseq': PARSeqEngine,
             'parseq_enhanced': EnhancedPARSeqEngine,

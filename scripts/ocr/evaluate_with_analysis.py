@@ -150,6 +150,11 @@ def main():
     
     logger.info(f"📸 Processando {len(image_files)} imagens...")
     
+    # Criar diretório para debug de imagens
+    debug_dir = output_dir / "debug_images"
+    debug_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"🖼️  Salvando imagens de debug em: {debug_dir}")
+    
     results = []
     for img_file in image_files:
         filename = img_file.name
@@ -171,22 +176,42 @@ def main():
             logger.warning(f"⚠️ Erro ao carregar: {filename}")
             continue
         
+        # Salvar imagem original
+        img_debug_dir = debug_dir / Path(filename).stem
+        img_debug_dir.mkdir(exist_ok=True)
+        cv2.imwrite(str(img_debug_dir / "00_original.png"), image)
+        
+        # Aplicar pré-processamento e salvar etapas
+        if preprocessor:
+            try:
+                preprocessed = preprocessor.process(image)
+                cv2.imwrite(str(img_debug_dir / "01_preprocessed.png"), preprocessed)
+            except Exception as e:
+                logger.warning(f"⚠️ Erro no pré-processamento: {e}")
+                preprocessed = image
+        else:
+            preprocessed = image
+        
         # Avaliar
         try:
             result = evaluator.evaluate_single(
                 image,
                 expected_text,
                 args.engine,
-                preprocessor=preprocessor
+                preprocessor=preprocessor,
+                debug_dir=img_debug_dir  # Passar diretório de debug
             )
             result['image_file'] = filename
             results.append(result)
             
             # Log progresso
-            logger.info(f"  ✓ {filename}: {'✅' if result['exact_match'] else '❌'} (CER: {result['character_error_rate']:.3f})")
+            status = '✅' if result['exact_match'] else '❌'
+            logger.info(f"  {status} {filename}: '{result.get('predicted_text', '')}' vs '{expected_text}' (CER: {result['character_error_rate']:.3f})")
             
         except Exception as e:
             logger.error(f"❌ Erro ao processar {filename}: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
     
     if not results:
         logger.error("❌ Nenhum resultado obtido")

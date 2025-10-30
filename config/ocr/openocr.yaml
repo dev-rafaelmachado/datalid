@@ -1,0 +1,96 @@
+# ============================================================================
+# OpenOCR Engine Configuration
+# ============================================================================
+# OpenOCR é um OCR open-source de alta precisão
+# GitHub: https://github.com/Ucas-HaoranWei/open_ocr
+#
+# Características:
+# - Suporta backends ONNX (rápido) e PyTorch (preciso)
+# - Funciona em CPU e GPU
+# - Otimizado para textos em geral e documentos
+# ============================================================================
+
+# Backend de inferência
+# - 'onnx': Mais rápido, menor uso de memória (recomendado para CPU)
+#           Para GPU: instale onnxruntime-gpu (pip uninstall onnxruntime && pip install onnxruntime-gpu)
+# - 'torch': Mais preciso, requer PyTorch instalado
+#           Para GPU: instale PyTorch com CUDA (https://pytorch.org)
+backend: 'torch'
+
+# Dispositivo de computação
+# - 'cpu': Compatível com qualquer máquina
+# - 'cuda': Requer GPU NVIDIA com CUDA
+#   IMPORTANTE: 
+#   * Pré-processamento (OpenCV) sempre usa CPU
+#   * Apenas inferência do modelo usa GPU
+#   * Para backend='onnx': precisa de onnxruntime-gpu
+#   * Para backend='torch': precisa de PyTorch com CUDA
+device: 'cuda'
+
+# Threshold de confiança mínima (0.0 a 1.0)
+# Textos com confiança abaixo deste valor são descartados
+confidence_threshold: 0.3
+
+# ============================================================================
+# Pré-processamento Otimizado
+# ============================================================================
+# Usa configuração dedicada em config/preprocessing/ppro-openocr.yaml
+# Esse arquivo define etapas de pré-processamento otimizadas para OpenOCR:
+#   - Normalização de cores (gray_world)
+#   - Resize preservando aspect ratio
+#   - Deskew para correção de rotação
+#   - CLAHE para melhor contraste
+#   - Sharpen para bordas mais nítidas
+#   - Denoising bilateral (preserva bordas)
+#   - Padding adequado
+preprocessing: ppro-openocr
+
+# ============================================================================
+# Pré-processamento Interno (Legacy - mantido para compatibilidade)
+# ============================================================================
+# NOTA: As configurações abaixo são usadas apenas pelo código interno do engine
+# Para pré-processamento completo, use a config ppro-openocr acima
+internal_preprocessing:
+  # Habilitar pré-processamento interno básico
+  enabled: true
+  
+  # Redimensionar imagens grandes (melhora performance)
+  resize: true
+  max_width: 1280
+  max_height: 1280
+
+# ============================================================================
+# Pós-processamento de Texto
+# ============================================================================
+postprocessing:
+  # Habilitar pós-processamento
+  enabled: true
+  
+  # Remover espaços duplicados
+  remove_extra_spaces: true
+  
+  # Remover espaços no início/fim
+  strip_whitespace: true
+  
+  # Converter para maiúsculas/minúsculas (opcional)
+  # to_upper: false
+  # to_lower: false
+  
+  # Remover caracteres especiais (opcional)
+  # remove_special_chars: false
+  # allowed_chars: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 /.-'
+
+# ============================================================================
+# Configurações Avançadas (futuro)
+# ============================================================================
+# advanced:
+#   # Batch processing
+#   batch_size: 1
+#   
+#   # Detecção de orientação
+#   auto_rotate: false
+#   
+#   # Filtros de qualidade
+#   min_text_length: 1
+#   max_text_length: 1000
+

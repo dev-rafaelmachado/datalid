@@ -95,3 +95,7 @@ outputs/**/*.png
 *.pt
 *.csv
 *.json
+
+/e2e_results/
+
+/outputs/ocr_benchmarks/**/debug_images/*

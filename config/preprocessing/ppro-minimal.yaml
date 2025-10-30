@@ -1,0 +1,36 @@
+# ⚙️ Sem Pré-processamento
+# Use apenas conversão básica para grayscale
+name: ppro-minimal
+
+steps:
+  # Apenas grayscale para compatibilidade
+  grayscale:
+    enabled: true
+
+  # Padding mínimo
+  padding:
+    enabled: true
+    size: 2
+    color: 255
+
+  # Tudo mais desabilitado
+  normalize_colors:
+    enabled: false
+  
+  resize:
+    enabled: false
+    
+  deskew:
+    enabled: false
+    
+  clahe:
+    enabled: false
+    
+  denoise:
+    enabled: false
+    
+  sharpen:
+    enabled: false
+    
+  threshold:
+    enabled: false
